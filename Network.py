@@ -69,9 +69,12 @@ class MyModel(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.encoder = self.build_encoder()
-        self.encoder.parameters(.re)
         self.decoder = self.build_decoder()
         self.encoder.eval()
+
+        # freeze params
+        for param in self.encoder.parameters():
+            param.requires_grad = False
 
         self.accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=2)
         self.recall = torchmetrics.Recall(task='multiclass', num_classes=2)
@@ -90,9 +93,10 @@ class MyModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        z = self.encoder(x)
 
+        z = self.encoder(x)
         pred = self.decoder(z)
+
         loss = torch.nn.functional.cross_entropy(pred, y)
         self.accuracy(pred, y)
         self.recall(pred, y)
@@ -108,6 +112,6 @@ class MyModel(pl.LightningModule):
         return self.decoder(self.encoder(x))
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
-        # optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.parameters()), lr=1e-3)
+        # optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.parameters()), lr=1e-3)
         return optimizer
