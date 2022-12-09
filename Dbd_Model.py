@@ -15,11 +15,12 @@ class My_Model(pl.LightningModule):
             param.requires_grad = False
 
         self.accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=2)
-        self.recall = torchmetrics.Recall(task='multiclass', num_classes=2)
 
     def build_encoder(self):
-        weights = models.MobileNet_V2_Weights.DEFAULT
-        return models.mobilenet_v2(weights=weights)
+        # weights = models.MobileNet_V2_Weights.DEFAULT
+        # return models.mobilenet_v2(weights=weights)
+        weights = models.MobileNet_V3_Small_Weights.DEFAULT
+        return models.mobilenet_v3_small(weights=weights)
 
     def build_decoder(self):
         return torch.nn.Sequential(
@@ -36,11 +37,9 @@ class My_Model(pl.LightningModule):
 
         loss = torch.nn.functional.cross_entropy(pred, y)
         self.accuracy(pred, y)
-        self.recall(pred, y)
 
         self.log("train_loss", loss)
         self.log('train_accuracy', self.accuracy, prog_bar=True, on_step=True, on_epoch=False)
-        self.log('train_recall', self.recall, prog_bar=True, on_step=True, on_epoch=False)
 
         return loss
 
@@ -52,11 +51,9 @@ class My_Model(pl.LightningModule):
 
         loss = torch.nn.functional.cross_entropy(pred, y)
         self.accuracy(pred, y)
-        self.recall(pred, y)
 
         self.log("val_loss", loss)
         self.log('val_accuracy', self.accuracy, prog_bar=True, on_step=False, on_epoch=True)
-        self.log('val_recall', self.recall, prog_bar=True, on_step=False, on_epoch=True)
 
     def forward(self, x):
         return self.decoder(self.encoder(x))

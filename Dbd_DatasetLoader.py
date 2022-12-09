@@ -8,9 +8,28 @@ import torchvision.io
 import torchvision.transforms as tf
 
 
-def get_randomSampler(labels):
+def get_filenames_labels(datasets_path, labels_idx):
+    assert len(datasets_path) == len(labels_idx)
+
+    all_filenames = []
+    all_labels = []
+    for i in range(len(datasets_path)):
+        directory = datasets_path[i]
+        label = labels_idx[i]
+
+        filenames = glob(os.path.join(directory, "*.png")) + glob(os.path.join(directory, "*.jpg"))
+        labels = [label] * len(filenames)
+
+        all_filenames += filenames
+        all_labels += labels
+
+    result_tuples = np.stack([all_filenames, all_labels], -1)
+    return result_tuples
+
+
+def get_randomSampler(training_dataloader):
     # Deal with imbalanced dataset, using a WeightedRandomSampler
-    labels = np.array(labels)
+    labels = np.array(training_dataloader.dataset.labels)[training_dataloader.indices]
     nb_labels_1 = np.count_nonzero(labels)  # Only for binary classification!
     nb_labels_0 = len(labels) - nb_labels_1
     probs = [1 / nb_labels_0, 1 / nb_labels_1]
@@ -20,21 +39,11 @@ def get_randomSampler(labels):
 
 
 class CustomDataset(Dataset):
-    def __init__(self, directories, directories_class_id, transform=None):
-        assert len(directories) == len(directories_class_id)
+    def __init__(self, filenames, labels, transform=None):
+        assert len(filenames) == len(labels)
+        self.filenames = filenames
+        self.labels = labels
         self.transform = transform
-
-        self.filenames = []
-        self.labels = []
-        for i in range(len(directories)):
-            directory = directories[i]
-            label = directories_class_id[i]
-
-            filenames = glob(os.path.join(directory, "*.png")) + glob(os.path.join(directory, "*.jpg"))
-            labels = [label] * len(filenames)
-
-            self.filenames += filenames
-            self.labels += labels
 
     def __len__(self):
         return len(self.filenames)
