@@ -5,17 +5,24 @@ from torch.utils.data import DataLoader
 import Network
 
 if __name__ == '__main__':
-    # datasets_path = ["E:/temp/dataset/0", "E:/temp/dataset/0bis"] + ["E:/temp/dataset/1", "E:/temp/dataset/1bis"] * 5
-    datasets_path = ["E:/temp/dataset/0bis"] + ["E:/temp/dataset/1", "E:/temp/dataset/1bis"]
-    labels_idx = [0] + [1, 1]
+    ##########################################################
+    checkpoint = None
     # checkpoint = "./lightning_logs/version_0/checkpoints/epoch=0-step=100.ckpt"
 
-    training_data = Network.CustomDataset(datasets_path, labels_idx, transform=Network.transforms)
-    train_dataloader = DataLoader(training_data, batch_size=32, shuffle=True)
+    # dataset_0 = ["E:/temp/dbd/0", "E:/temp/dbd/0bis"]
+    dataset_0 = ["E:/temp/dbd/0bis"]
+    dataset_1 = ["E:/temp/dbd/1", "E:/temp/dbd/1bis"]
+    datasets_path = dataset_0 + dataset_1
+    labels_idx = [0] + [1, 1]
+    ##########################################################
 
-    my_model = Network.MyModel()
-    # my_model = Network.MyModel.load_from_checkpoint(checkpoint)
-    trainer = pl.Trainer(accelerator='gpu', max_epochs=100)
+    training_data = Network.CustomDataset(datasets_path, labels_idx, transform=Network.transforms)
+    sampler = training_data.getSampler()
+    train_dataloader = DataLoader(training_data, sampler=sampler, batch_size=64)
+    # test = next(iter(train_dataloader))
+
+    my_model = Network.MyModel() if checkpoint is None else Network.MyModel.load_from_checkpoint(checkpoint)
+    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=100)
     trainer.fit(model=my_model, train_dataloaders=train_dataloader)
 
     # for img in train_features:

@@ -1,6 +1,7 @@
 import os.path
 from glob import glob
 
+import numpy as np
 import pytorch_lightning as pl
 import torchmetrics
 
@@ -21,8 +22,11 @@ class CustomDataset(Dataset):
             directory = directories[i]
             label = directories_class_id[i]
 
-            self.filenames += glob(os.path.join(directory, "*.png")) + glob(os.path.join(directory, "*.jpg"))
-            self.labels += [label] * len(self.filenames)
+            filenames = glob(os.path.join(directory, "*.png")) + glob(os.path.join(directory, "*.jpg"))
+            labels = [label] * len(filenames)
+
+            self.filenames += filenames
+            self.labels += labels
 
     def __len__(self):
         return len(self.filenames)
@@ -35,6 +39,16 @@ class CustomDataset(Dataset):
             image = self.transform(image)
 
         return image, label
+
+    def getSampler(self):
+        # Deal with imbalanced dataset, using a WeightedRandomSampler
+        labels = np.array(self.labels)
+        nb_labels_1 = np.count_nonzero(labels)  # Only for binary classification!
+        nb_labels_0 = len(self.labels) - nb_labels_1
+        probs = [1 / nb_labels_0, 1 / nb_labels_1]
+        w = [probs[0]] * nb_labels_0 + [probs[1]] * nb_labels_1
+        sampler = torch.utils.data.WeightedRandomSampler(w, len(w), replacement=True)
+        return sampler
 
 
 transforms_test = tf.Compose([
@@ -55,6 +69,7 @@ class MyModel(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.encoder = self.build_encoder()
+        self.encoder.parameters(.re)
         self.decoder = self.build_decoder()
         self.encoder.eval()
 
@@ -84,9 +99,6 @@ class MyModel(pl.LightningModule):
 
         # Logging to TensorBoard by default
         self.log("train_loss", loss)
-        # self.log('train_accuracy', self.accuracy, prog_bar=True, on_step=True, on_epoch=True)
-        # self.log('train_recall', self.recall, prog_bar=True, on_step=True, on_epoch=True)
-
         self.log('train_accuracy', self.accuracy, prog_bar=True, on_step=False, on_epoch=True)
         self.log('train_recall', self.recall, prog_bar=True, on_step=False, on_epoch=True)
 
@@ -97,4 +109,5 @@ class MyModel(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        # optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.parameters()), lr=1e-3)
         return optimizer
