@@ -2,6 +2,10 @@ import numpy as np
 import cv2
 import mss
 import pyautogui
+import torch
+
+import Dbd_Model
+import Dbd_DatasetLoader
 
 width, height = pyautogui.size()
 object_size_h = height // 6
@@ -13,26 +17,24 @@ monitor = {"top": height // 2 - object_size // 2,
            "width": object_size,
            "height": object_size}
 
+checkpoint = "./lightning_logs/version_2/checkpoints/epoch=1-step=1316.ckpt"
+model = Dbd_Model.My_Model.load_from_checkpoint(checkpoint)
+model.eval()
+
 with mss.mss() as sct:
     i = 0
     while True:
         screenshot = np.array(sct.grab(monitor))
-        cv2.imwrite("E:/temp/dataset/vid/e{}.png".format(i), screenshot)
-        i += 1
+
+        # cv2.imwrite("E:/temp/dataset/vid/e{}.png".format(i), screenshot)
         # cv2.imshow('screen', screenshot)
         # cv2.waitKey(1)
+        # i += 1
 
+        input = torch.from_numpy(screenshot)
+        input = torch.permute(input, (2, 0, 1))[:3]
+        input = Dbd_DatasetLoader.transforms_test(input.unsqueeze(0))
+        pred = model(input)
 
-# images = glob("E:/temp/dataset/0_full/*.png")
-# i = 0
-# for image in images:
-#     img = torchvision.io.read_image(image)
-#     img = tff.center_crop(img, [224, 224])
-#
-#     img_np = torch.permute(img, [1, 2, 0]).numpy()
-#     img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
-#     cv2.imwrite("E:/temp/dataset/0/{}.png".format(i), img_np)
-#     # cv2.imshow("", img_np)
-#     # cv2.waitKey(0)
-#     i += 1
-
+        pred_id = torch.argmax(pred, -1)
+        print(pred_id.item())
