@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import DataLoader
-import Network
+import Dbd_Model
 
 if __name__ == '__main__':
     dataset_test_0 = ["E:/temp/dbd/test/0"]
@@ -8,11 +8,11 @@ if __name__ == '__main__':
     labels = [0, 1]
     checkpoint = "./lightning_logs/version_1/checkpoints/epoch=6-step=5754.ckpt"
 
-    test_data = Network.CustomDataset(dataset_test_0 + dataset_test_1, labels, transform=Network.transforms_test)
+    test_data = Dbd_Model.CustomDataset(dataset_test_0 + dataset_test_1, labels, transform=Network.transforms_test)
     test_dataloader = DataLoader(test_data, batch_size=1, shuffle=False)
 
     # my_model = Network.MyModel()
-    my_model = Network.MyModel.load_from_checkpoint(checkpoint)
+    my_model = Dbd_Model.My_Model.load_from_checkpoint(checkpoint)
 
     for sample in test_dataloader.dataset:
         pred = my_model(sample[0].unsqueeze(0))
