@@ -3,11 +3,12 @@ from torch.utils.data import DataLoader
 import Network
 
 if __name__ == '__main__':
-    dataset_test = ["E:/temp/dataset/TEST"]
-    labels = [1]
-    checkpoint = "./lightning_logs/version_2/checkpoints/epoch=9-step=16440.ckpt"
+    dataset_test_0 = ["E:/temp/dbd/test/0"]
+    dataset_test_1 = ["E:/temp/dbd/test/1"]
+    labels = [0, 1]
+    checkpoint = "./lightning_logs/version_1/checkpoints/epoch=6-step=5754.ckpt"
 
-    test_data = Network.CustomDataset(dataset_test, labels, transform=Network.transforms_test)
+    test_data = Network.CustomDataset(dataset_test_0 + dataset_test_1, labels, transform=Network.transforms_test)
     test_dataloader = DataLoader(test_data, batch_size=1, shuffle=False)
 
     # my_model = Network.MyModel()
@@ -17,7 +18,7 @@ if __name__ == '__main__':
         pred = my_model(sample[0].unsqueeze(0))
         y_true = sample[1]
         y_pred = torch.argmax(pred, -1)
-        print("pred: {}, true:{}".format(y_pred, y_true))
+        print("pred: {}, true: {}".format(y_pred.item(), y_true))
 
     # for img in train_features:
     #     img_np = torch.permute(img, [1, 2, 0]).numpy()
