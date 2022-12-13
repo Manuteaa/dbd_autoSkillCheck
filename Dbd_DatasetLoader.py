@@ -33,6 +33,7 @@ def get_randomSampler(dataset):
     nb_labels = dataset.labels.shape[0]
     prob_labels = [torch.count_nonzero(dataset.labels == i) / nb_labels for i in range(label_max+1)]
     w = [1.0 - prob_labels[label] for label in dataset.labels]
+    # w = torch.as_tensor(w, dtype=torch.double)  # will be auto casted
     sampler = torch.utils.data.WeightedRandomSampler(w, len(w), replacement=True)
     return sampler
 

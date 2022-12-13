@@ -28,12 +28,12 @@ if __name__ == '__main__':
     validation_dataset = Dbd_DatasetLoader.CustomDataset(data_tuples=validation_data, transform=Dbd_DatasetLoader.transforms_test)
 
     training_sampler = Dbd_DatasetLoader.get_randomSampler(training_dataset)
-    training_dataloader = DataLoader(training_dataset, sampler=training_sampler, batch_size=64, pin_memory=True, num_workers=1)
-    validation_dataloader = DataLoader(validation_dataset, batch_size=64, shuffle=False, pin_memory=True, num_workers=1)
+    training_dataloader = DataLoader(training_dataset, sampler=training_sampler, batch_size=64, pin_memory=True, num_workers=8)
+    validation_dataloader = DataLoader(validation_dataset, batch_size=64, shuffle=False, pin_memory=True, num_workers=8)
     # test = next(iter(training_dataloader))
 
     my_model = Dbd_Model.My_Model() if checkpoint is None else Dbd_Model.My_Model.load_from_checkpoint(checkpoint)
-    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=5)
+    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=1)
     trainer.fit(model=my_model, train_dataloaders=training_dataloader, val_dataloaders=validation_dataloader)
 
     # for img in train_features:
