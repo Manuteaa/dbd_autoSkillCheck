@@ -27,22 +27,26 @@ def get_filenames_labels(datasets_path, labels_idx):
     return result_tuples
 
 
-def get_randomSampler(training_dataloader):
+def get_randomSampler(dataset):
     # Deal with imbalanced dataset, using a WeightedRandomSampler
-    labels = np.array(training_dataloader.dataset.labels)[training_dataloader.indices]
-    nb_labels_1 = np.count_nonzero(labels)  # Only for binary classification!
-    nb_labels_0 = len(labels) - nb_labels_1
-    probs = [1 / nb_labels_0, 1 / nb_labels_1]
-    w = [probs[0]] * nb_labels_0 + [probs[1]] * nb_labels_1
+    label_max = torch.max(dataset.labels)
+    nb_labels = dataset.labels.shape[0]
+    prob_labels = [torch.count_nonzero(dataset.labels == i) / nb_labels for i in range(label_max+1)]
+    w = [1.0 - prob_labels[label] for label in dataset.labels]
     sampler = torch.utils.data.WeightedRandomSampler(w, len(w), replacement=True)
     return sampler
 
 
 class CustomDataset(Dataset):
-    def __init__(self, filenames, labels, transform=None):
-        assert len(filenames) == len(labels)
+    def __init__(self, filenames=None, labels=None, data_tuples=None, transform=None):
+        if data_tuples is not None:
+            filenames, labels = np.transpose(data_tuples, (1, 0))
+            labels = labels.astype(np.int64)
+
+        assert filenames is not None and labels is not None and len(filenames) == len(labels)
+
         self.filenames = filenames
-        self.labels = labels
+        self.labels = torch.tensor(labels)
         self.transform = transform
 
     def __len__(self):

@@ -14,7 +14,7 @@ class My_Model(pl.LightningModule):
         for param in self.encoder.parameters():
             param.requires_grad = False
 
-        self.accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=2)
+        self.accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=3)
 
     def build_encoder(self):
         # weights = models.MobileNet_V2_Weights.DEFAULT
@@ -26,7 +26,7 @@ class My_Model(pl.LightningModule):
         return torch.nn.Sequential(
             torch.nn.Linear(1000, 1000),
             torch.nn.ReLU(),
-            torch.nn.Linear(1000, 2),
+            torch.nn.Linear(1000, 3),
             torch.nn.Softmax()
         )
 
