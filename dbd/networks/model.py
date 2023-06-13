@@ -3,7 +3,7 @@ import torchmetrics
 import torch
 import torchvision.models as models
 
-class My_Model(pl.LightningModule):
+class Model(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.encoder = self.build_encoder()
