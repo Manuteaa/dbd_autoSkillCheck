@@ -22,3 +22,23 @@ def get_validation_transforms():
     ])
     return transforms
 
+
+if __name__ == '__main__':
+    from PIL import Image
+    import numpy as np
+
+    dataset_root = "dataset/"
+    transforms_train, transforms_valid = get_training_transforms(), get_validation_transforms()
+    dataloader_train, _ = get_dataloaders(dataset_root, transforms_train, transforms_valid)
+
+    for i, batch in enumerate(dataloader_train):
+        x, y = batch
+        x = x[0]
+        x = x.permute((1, 2, 0))
+
+        x = x * 255.
+        x = x.cpu().numpy().astype(np.uint8)
+
+        img = Image.fromarray(x, "RGB")
+        img.save(os.path.join(dataset_root, "{}.jpg".format(i)))
+        print("Saving {}.jpg".format(i))
