@@ -1,7 +1,8 @@
 import os.path
 import torch
+import numpy as np
 
-from torch.utils.data import random_split, DataLoader
+from torch.utils.data import random_split, DataLoader, WeightedRandomSampler
 from torchvision.datasets import ImageFolder
 
 
@@ -19,9 +20,23 @@ def get_dataloaders(root, transforms_train, transforms_val, seed=42):
     dataset_train.dataset.transform = transforms_train
     dataset_val.dataset.transform = transforms_val
 
+    # Get sampler
+    count_classes = np.unique(full_dataset.targets, return_counts=True)[1]
+    nb_classes = count_classes.size
+
+    w_mapping = 1.0 / count_classes  # all classes have equal chance to be sampled. Note that it does not sum up to one
+    w_mapping[0] = w_mapping[0] * (nb_classes - 1)  # we want p(sampling class 0)=0.5 and p(sampling class not 0)=0.5
+    w = w_mapping[full_dataset.targets]
+
+    w_train = w[dataset_train.indices]  # get associated subset of weight
+    sampler_train = WeightedRandomSampler(w_train, num_samples=32, replacement=True, generator=generator)
+
+    w_val = w[dataset_val.indices]  # get associated subset of weight
+    sampler_val = WeightedRandomSampler(w_val, num_samples=32, replacement=True, generator=generator)
+
     #Set dataloaders
-    dataloader_train = DataLoader(dataset_train, batch_size=32, shuffle=True, generator=generator)  # TODO: use WeightedRandomSampler to deal with class imbalance?
-    dataloader_val = DataLoader(dataset_val, batch_size=64, shuffle=False)
+    dataloader_train = DataLoader(dataset_train, sampler=sampler_train)
+    dataloader_val = DataLoader(dataset_val, sampler=sampler_val)
 
     return dataloader_train, dataloader_val
 
