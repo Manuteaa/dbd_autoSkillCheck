@@ -1,42 +1,104 @@
 import os.path
 import torch
 import numpy as np
+from glob import glob
+from PIL import Image
+import math
 
-from torch.utils.data import random_split, DataLoader, WeightedRandomSampler
-from torchvision.datasets import ImageFolder
+from dbd.datasets.transforms import get_training_transforms, get_validation_transforms
+from torch.utils.data import DataLoader, WeightedRandomSampler, Dataset
 
+class DBD_dataset(Dataset):
+    def __init__(self, dataset, transform):
+        self.images_path = dataset[:, 0]
+        self.targets = np.array(dataset[:, 1], dtype=np.int64)
+        self.transform = transform
 
-def get_dataloaders(root, transforms_train, transforms_val, seed=42):
-    assert os.path.exists(root)
+    def __len__(self):
+        return len(self.targets)
 
-    # Use ImageDataset for integrated (image, class_target) parsing following dataset structure
-    full_dataset = ImageFolder(root)
+    def __getitem__(self, idx):
+        image = self.images_path[idx]
+        image = Image.open(image).convert('RGB')
+        image = self.transform(image)
 
-    # Split training and validation
-    generator = torch.Generator().manual_seed(seed)
-    dataset_train, dataset_val = random_split(full_dataset, [0.8, 0.2], generator)
+        target = self.targets[idx]  # conversion to tensor is done in default collate
 
-    # Set correct transform (note that setting transforms (with an 's') is not necessary)
-    dataset_train.dataset.transform = transforms_train
-    dataset_val.dataset.transform = transforms_val
+        return image, target
 
-    # Get sampler
-    count_classes = np.unique(full_dataset.targets, return_counts=True)[1]
-    nb_classes = count_classes.size
+    def _get_class_weights(self):
+        count_classes = np.unique(self.targets, return_counts=True)[1]
+        nb_classes = count_classes.size
+        w_mapping = 1.0 / count_classes  # all classes have equal chance to be sampled
+        w_mapping[0] = w_mapping[0] * (nb_classes - 1)  # we want p(sampling class 0)=0.5 and p(sampling class not 0)=0.5
+        return w_mapping
 
-    w_mapping = 1.0 / count_classes  # all classes have equal chance to be sampled. Note that it does not sum up to one
-    w_mapping[0] = w_mapping[0] * (nb_classes - 1)  # we want p(sampling class 0)=0.5 and p(sampling class not 0)=0.5
-    w = w_mapping[full_dataset.targets]
+    def get_sampler(self, seed=42):
+        generator_torch = torch.Generator().manual_seed(seed)
+        w = self._get_class_weights()
+        w = w[self.targets]
+        sampler = WeightedRandomSampler(w, num_samples=len(w), replacement=True, generator=generator_torch)
+        return sampler
 
-    w_train = w[dataset_train.indices]  # get associated subset of weight
-    sampler_train = WeightedRandomSampler(w_train, num_samples=32, replacement=True, generator=generator)
+def _parse_dbd_datasetfolder(root_dataset_path):
+    folders = os.scandir(root_dataset_path)
+    images_all = []
+    targets_all = []
 
-    w_val = w[dataset_val.indices]  # get associated subset of weight
-    sampler_val = WeightedRandomSampler(w_val, num_samples=32, replacement=True, generator=generator)
+    for folder in folders:
+        name, path = folder.name, folder.path
+        if name.isdigit():
+            print("Parsing folder " + name)
+        else:
+            print("Skipping folder " + name)
+            continue
 
-    #Set dataloaders
-    dataloader_train = DataLoader(dataset_train, sampler=sampler_train)
-    dataloader_val = DataLoader(dataset_val, sampler=sampler_val)
+        images = glob(os.path.join(path, "*"))
+
+        images_all += images
+        targets_all += [name] * len(images)
+
+    dataset = np.stack([images_all, targets_all], axis=-1)
+    return dataset
+
+def get_dataloaders(root_dataset_path, seed=42):
+    assert os.path.exists(root_dataset_path)
+
+    # Parse dataset
+    dataset = _parse_dbd_datasetfolder(root_dataset_path)
+
+    # Shuffle dataset and split into a training set and a validation set
+    generator = np.random.default_rng(seed)
+    generator.shuffle(dataset)
+
+    nb_samples_train = math.floor(0.8 * len(dataset))
+    dataset_train, dataset_val = dataset[:nb_samples_train], dataset[nb_samples_train:]
+
+    # Set datasets
+    training_transforms = get_training_transforms()
+    dataset_train = DBD_dataset(dataset_train, training_transforms)
+
+    validation_transforms = get_validation_transforms()
+    dataset_val = DBD_dataset(dataset_val, validation_transforms)
+
+    # Set dataloaders
+    dataloader_train = DataLoader(dataset_train, sampler=dataset_train.get_sampler(), batch_size=32)
+    dataloader_val = DataLoader(dataset_val, sampler=dataset_val.get_sampler(), batch_size=32)
 
     return dataloader_train, dataloader_val
 
+if __name__ == '__main__':
+    dataset_root = "dataset/"
+    dataloader_train, dataloader_val = get_dataloaders(dataset_root)
+
+    for i, batch in enumerate(dataloader_train):
+        x, y = batch
+        x = x[0]  # take first sample
+        x = x.permute((1, 2, 0))  # channel last
+
+        x = x * 255.
+        x = x.cpu().numpy().astype(np.uint8)
+
+        img = Image.fromarray(x, "RGB")
+        img.save(os.path.join(dataset_root, "{}.jpg".format(i)))
+        print("Saving {}.jpg".format(i))
