@@ -61,7 +61,7 @@ def _parse_dbd_datasetfolder(root_dataset_path):
     dataset = np.stack([images_all, targets_all], axis=-1)
     return dataset
 
-def get_dataloaders(root_dataset_path, seed=42):
+def get_dataloaders(root_dataset_path, seed=42, num_workers=0):
     assert os.path.exists(root_dataset_path)
 
     # Parse dataset
@@ -82,8 +82,8 @@ def get_dataloaders(root_dataset_path, seed=42):
     dataset_val = DBD_dataset(dataset_val, validation_transforms)
 
     # Set dataloaders
-    dataloader_train = DataLoader(dataset_train, sampler=dataset_train.get_sampler(), batch_size=32)
-    dataloader_val = DataLoader(dataset_val, sampler=dataset_val.get_sampler(), batch_size=32)
+    dataloader_train = DataLoader(dataset_train, sampler=dataset_train.get_sampler(), batch_size=32, num_workers=num_workers)
+    dataloader_val = DataLoader(dataset_val, sampler=dataset_val.get_sampler(), batch_size=32, num_workers=num_workers)
 
     return dataloader_train, dataloader_val
 
