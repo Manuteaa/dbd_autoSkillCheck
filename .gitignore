@@ -3,3 +3,4 @@ dataset/
 *.yaml
 .idea/
 *.pyc
+lightning_logs/
