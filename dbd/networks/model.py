@@ -27,7 +27,7 @@ class Model(pl.LightningModule):
             torch.nn.Linear(1000, 1000),
             torch.nn.ReLU(),
             torch.nn.Linear(1000, 3),
-            torch.nn.Softmax()
+            # torch.nn.Softmax()  # Use logits instead
         )
 
     def training_step(self, batch, batch_idx):
