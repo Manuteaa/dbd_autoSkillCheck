@@ -88,15 +88,20 @@ def get_dataloaders(root_dataset_path, seed=42):
     return dataloader_train, dataloader_val
 
 if __name__ == '__main__':
+    from dbd.datasets.transforms import MEAN, STD
+
     dataset_root = "dataset/"
     dataloader_train, dataloader_val = get_dataloaders(dataset_root)
 
+    std = torch.tensor(STD, dtype=torch.float32).reshape((3, 1, 1))
+    mean = torch.tensor(MEAN, dtype=torch.float32).reshape((3, 1, 1))
     for i, batch in enumerate(dataloader_train):
         x, y = batch
         x = x[0]  # take first sample
-        x = x.permute((1, 2, 0))  # channel last
-
+        x = x * std + mean  # un-normalization to [0, 1] with auto-broadcast
         x = x * 255.
+
+        x = x.permute((1, 2, 0))  # channel last
         x = x.cpu().numpy().astype(np.uint8)
 
         img = Image.fromarray(x, "RGB")
