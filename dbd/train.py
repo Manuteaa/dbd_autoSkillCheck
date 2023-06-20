@@ -6,7 +6,7 @@ from dbd.networks.model import Model
 
 if __name__ == '__main__':
     ##########################################################
-    checkpoint = "lightning_logs/version_2/checkpoints/epoch=6-step=3577.ckpt"
+    # checkpoint = "./lightning_logs/version_1/checkpoints/epoch=6-step=5754.ckpt"
     dataset_root = "dataset/"
 
     lr = 1e-3
@@ -17,8 +17,7 @@ if __name__ == '__main__':
 
     # Model
     model = Model(lr)
-    # model.load_from_checkpoint(checkpoint, strict=True)
 
-    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=50)
+    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=20)
     trainer.fit(model=model, train_dataloaders=dataloader_train, val_dataloaders=dataloader_val)
 

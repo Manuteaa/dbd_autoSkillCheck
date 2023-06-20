@@ -4,65 +4,63 @@ import torch
 import torchvision.models as models
 
 class Model(pl.LightningModule):
-    def __init__(self):
+    def __init__(self, lr=1e-3):
         super().__init__()
         self.encoder = self.build_encoder()
         self.decoder = self.build_decoder()
-        self.encoder.eval()
 
-        # freeze params
-        for param in self.encoder.parameters():
-            param.requires_grad = False
-
-        self.accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=3, average=None)
+        self.accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=3)
 
     def build_encoder(self):
         # weights = models.MobileNet_V2_Weights.DEFAULT
-        # return models.mobilenet_v2(weights=weights)
-        weights = models.MobileNet_V3_Small_Weights.DEFAULT
-        return models.mobilenet_v3_small(weights=weights)
+        # encoder = models.mobilenet_v2(weights=weights)
+
+        weights = models.ConvNeXt_Tiny_Weights.DEFAULT
+        encoder = models.convnext_tiny(weights=weights)
+
+        # Freeze encoder
+        for param in encoder.parameters():
+            param.requires_grad = False
+
+        return encoder
 
     def build_decoder(self):
         return torch.nn.Sequential(
-            # torch.nn.Linear(1000, 1000),
-            # torch.nn.ReLU(),
+            torch.nn.Linear(1000, 1000),
+            torch.nn.ReLU(),
             torch.nn.Linear(1000, 3),
             # torch.nn.Softmax()  # Use logits instead
         )
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        z = self.encoder(x)
-        pred = self.decoder(z)
+
+        pred = self(x)
 
         loss = torch.nn.functional.cross_entropy(pred, y)
-        acc_0, acc_1, acc_2 = self.accuracy(pred, y)
+        self.accuracy(pred, y)
 
-        self.log("loss/train", loss)
-        self.log('acc/train_0', acc_0, prog_bar=True, on_step=True, on_epoch=False)
-        self.log('acc/train_1', acc_1, prog_bar=True, on_step=True, on_epoch=False)
-        self.log('acc/train_2', acc_2, prog_bar=True, on_step=True, on_epoch=False)
+        self.log("train_loss", loss)
+        self.log('train_accuracy', self.accuracy, prog_bar=True, on_step=True, on_epoch=False)
 
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
 
-        z = self.encoder(x)
-        pred = self.decoder(z)
+        pred = self(x)
 
         loss = torch.nn.functional.cross_entropy(pred, y)
-        acc_0, acc_1, acc_2 = self.accuracy(pred, y)
+        self.accuracy(pred, y)
 
-        self.log("loss/val", loss)
-        self.log('acc/val_0', acc_0, prog_bar=True, on_step=False, on_epoch=True)
-        self.log('acc/val_1', acc_1, prog_bar=True, on_step=False, on_epoch=True)
-        self.log('acc/val_2', acc_2, prog_bar=True, on_step=False, on_epoch=True)
+        self.log("val_loss", loss)
+        self.log('val_accuracy', self.accuracy, prog_bar=True, on_step=False, on_epoch=True)
 
     def forward(self, x):
-        return self.decoder(self.encoder(x))
+        z = self.encoder(x)
+        pred = self.decoder(z)
+        return pred
 
     def configure_optimizers(self):
-        # optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
-        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.parameters()), lr=1e-4)
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
