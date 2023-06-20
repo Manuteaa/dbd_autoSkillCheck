@@ -14,7 +14,7 @@ class Model(pl.LightningModule):
         for param in self.encoder.parameters():
             param.requires_grad = False
 
-        self.accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=3)
+        self.accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=3, average=None)
 
     def build_encoder(self):
         # weights = models.MobileNet_V2_Weights.DEFAULT
@@ -24,8 +24,8 @@ class Model(pl.LightningModule):
 
     def build_decoder(self):
         return torch.nn.Sequential(
-            torch.nn.Linear(1000, 1000),
-            torch.nn.ReLU(),
+            # torch.nn.Linear(1000, 1000),
+            # torch.nn.ReLU(),
             torch.nn.Linear(1000, 3),
             # torch.nn.Softmax()  # Use logits instead
         )
@@ -36,10 +36,12 @@ class Model(pl.LightningModule):
         pred = self.decoder(z)
 
         loss = torch.nn.functional.cross_entropy(pred, y)
-        self.accuracy(pred, y)
+        acc_0, acc_1, acc_2 = self.accuracy(pred, y)
 
-        self.log("train_loss", loss)
-        self.log('train_accuracy', self.accuracy, prog_bar=True, on_step=True, on_epoch=False)
+        self.log("loss/train", loss)
+        self.log('acc/train_0', acc_0, prog_bar=True, on_step=True, on_epoch=False)
+        self.log('acc/train_1', acc_1, prog_bar=True, on_step=True, on_epoch=False)
+        self.log('acc/train_2', acc_2, prog_bar=True, on_step=True, on_epoch=False)
 
         return loss
 
@@ -50,10 +52,12 @@ class Model(pl.LightningModule):
         pred = self.decoder(z)
 
         loss = torch.nn.functional.cross_entropy(pred, y)
-        self.accuracy(pred, y)
+        acc_0, acc_1, acc_2 = self.accuracy(pred, y)
 
-        self.log("val_loss", loss)
-        self.log('val_accuracy', self.accuracy, prog_bar=True, on_step=False, on_epoch=True)
+        self.log("loss/val", loss)
+        self.log('acc/val_0', acc_0, prog_bar=True, on_step=False, on_epoch=True)
+        self.log('acc/val_1', acc_1, prog_bar=True, on_step=False, on_epoch=True)
+        self.log('acc/val_2', acc_2, prog_bar=True, on_step=False, on_epoch=True)
 
     def forward(self, x):
         return self.decoder(self.encoder(x))
