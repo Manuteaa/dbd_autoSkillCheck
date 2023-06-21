@@ -9,7 +9,7 @@ if __name__ == '__main__':
     # checkpoint = "./lightning_logs/version_1/checkpoints/epoch=6-step=5754.ckpt"
     dataset_root = "dataset/"
 
-    lr = 1e-3
+    lr = 1e-4
     ##########################################################
 
     # Dataset
@@ -18,6 +18,8 @@ if __name__ == '__main__':
     # Model
     model = Model(lr)
 
-    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=20)
+    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=200)
     trainer.fit(model=model, train_dataloaders=dataloader_train, val_dataloaders=dataloader_val)
+
+    # tensorboard --logdir=lightning_logs/
 

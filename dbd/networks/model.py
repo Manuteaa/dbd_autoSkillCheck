@@ -8,15 +8,16 @@ class Model(pl.LightningModule):
         super().__init__()
         self.encoder = self.build_encoder()
         self.decoder = self.build_decoder()
+        self.lr = lr
 
-        self.accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=3)
+        self.accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=3, average=None)
 
     def build_encoder(self):
-        # weights = models.MobileNet_V2_Weights.DEFAULT
-        # encoder = models.mobilenet_v2(weights=weights)
+        weights = models.MobileNet_V3_Large_Weights.DEFAULT
+        encoder = models.mobilenet_v3_large(weights=weights)
 
-        weights = models.ConvNeXt_Tiny_Weights.DEFAULT
-        encoder = models.convnext_tiny(weights=weights)
+        # weights = models.ConvNeXt_Tiny_Weights.DEFAULT
+        # encoder = models.convnext_tiny(weights=weights)
 
         # Freeze encoder
         for param in encoder.parameters():
@@ -38,10 +39,12 @@ class Model(pl.LightningModule):
         pred = self(x)
 
         loss = torch.nn.functional.cross_entropy(pred, y)
-        self.accuracy(pred, y)
+        acc_0, acc_1, acc_2 = self.accuracy(pred, y)
 
-        self.log("train_loss", loss)
-        self.log('train_accuracy', self.accuracy, prog_bar=True, on_step=True, on_epoch=False)
+        self.log("loss/train", loss)
+        self.log('acc/train_0', acc_0, prog_bar=True, on_step=False, on_epoch=True)
+        self.log('acc/train_1', acc_1, prog_bar=True, on_step=False, on_epoch=True)
+        self.log('acc/train_2', acc_2, prog_bar=True, on_step=False, on_epoch=True)
 
         return loss
 
@@ -51,10 +54,12 @@ class Model(pl.LightningModule):
         pred = self(x)
 
         loss = torch.nn.functional.cross_entropy(pred, y)
-        self.accuracy(pred, y)
+        acc_0, acc_1, acc_2 = self.accuracy(pred, y)
 
-        self.log("val_loss", loss)
-        self.log('val_accuracy', self.accuracy, prog_bar=True, on_step=False, on_epoch=True)
+        self.log("loss/val", loss)
+        self.log('acc/val_0', acc_0, prog_bar=True, on_step=False, on_epoch=True)
+        self.log('acc/val_1', acc_1, prog_bar=True, on_step=False, on_epoch=True)
+        self.log('acc/val_2', acc_2, prog_bar=True, on_step=False, on_epoch=True)
 
     def forward(self, x):
         z = self.encoder(x)
@@ -62,5 +67,5 @@ class Model(pl.LightningModule):
         return pred
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer

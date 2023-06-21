@@ -28,9 +28,7 @@ class DBD_dataset(Dataset):
 
     def _get_class_weights(self):
         count_classes = np.unique(self.targets, return_counts=True)[1]
-        nb_classes = count_classes.size
         w_mapping = 1.0 / count_classes  # all classes have equal chance to be sampled
-        w_mapping[0] = w_mapping[0] * (nb_classes - 1)  # we want p(sampling class 0)=0.5 and p(sampling class not 0)=0.5
         return w_mapping
 
     def get_sampler(self, seed=42):
@@ -61,7 +59,7 @@ def _parse_dbd_datasetfolder(root_dataset_path):
     dataset = np.stack([images_all, targets_all], axis=-1)
     return dataset
 
-def get_dataloaders(root_dataset_path, seed=42, num_workers=0):
+def get_dataloaders(root_dataset_path, batch_size=32, seed=42, num_workers=0):
     assert os.path.exists(root_dataset_path)
 
     # Parse dataset
@@ -82,8 +80,8 @@ def get_dataloaders(root_dataset_path, seed=42, num_workers=0):
     dataset_val = DBD_dataset(dataset_val, validation_transforms)
 
     # Set dataloaders
-    dataloader_train = DataLoader(dataset_train, sampler=dataset_train.get_sampler(), batch_size=32, num_workers=num_workers)
-    dataloader_val = DataLoader(dataset_val, sampler=dataset_val.get_sampler(), batch_size=32, num_workers=num_workers)
+    dataloader_train = DataLoader(dataset_train, sampler=dataset_train.get_sampler(), batch_size=batch_size, num_workers=num_workers)
+    dataloader_val = DataLoader(dataset_val, sampler=dataset_val.get_sampler(), batch_size=batch_size, num_workers=num_workers)
 
     return dataloader_train, dataloader_val
 
