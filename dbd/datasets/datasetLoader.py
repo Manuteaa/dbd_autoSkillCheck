@@ -51,7 +51,7 @@ def _parse_dbd_datasetfolder(root_dataset_path):
             print("Skipping folder " + name)
             continue
 
-        images = glob(os.path.join(path, "*.*"), recursive=True)
+        images = glob(os.path.join(path, "*.*")) + glob(os.path.join(path, "*", "*.*"))
 
         images_all += images
         targets_all += [name] * len(images)
