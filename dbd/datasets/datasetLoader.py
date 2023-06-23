@@ -2,16 +2,20 @@ import os.path
 import torch
 import numpy as np
 from glob import glob
+
+import torchvision.io
 from PIL import Image
 import math
 
 from dbd.datasets.transforms import get_training_transforms, get_validation_transforms
 from torch.utils.data import DataLoader, WeightedRandomSampler, Dataset
+from torchvision.io import read_image
 
 class DBD_dataset(Dataset):
     def __init__(self, dataset, transform):
         self.images_path = dataset[:, 0]
-        self.targets = np.array(dataset[:, 1], dtype=np.int64)
+        self.targets = torch.tensor(dataset[:, 1].astype(np.int64), dtype=torch.int64)
+
         self.transform = transform
 
     def __len__(self):
@@ -19,15 +23,16 @@ class DBD_dataset(Dataset):
 
     def __getitem__(self, idx):
         image = self.images_path[idx]
-        image = Image.open(image).convert('RGB')
+        image = read_image(image, mode=torchvision.io.ImageReadMode.RGB)
         image = self.transform(image)
 
-        target = self.targets[idx]  # conversion to tensor is done in default collate
+        # no transform for target
+        target = self.targets[idx]
 
         return image, target
 
     def _get_class_weights(self):
-        count_classes = np.unique(self.targets, return_counts=True)[1]
+        count_classes = torch.unique(self.targets, return_counts=True)[1]
         w_mapping = 1.0 / count_classes  # all classes have equal chance to be sampled
         return w_mapping
 
