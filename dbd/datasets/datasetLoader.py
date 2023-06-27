@@ -2,6 +2,7 @@ import os.path
 import torch
 import numpy as np
 from glob import glob
+import tqdm
 
 import torchvision.io
 from PIL import Image
@@ -11,24 +12,28 @@ from dbd.datasets.transforms import get_training_transforms, get_validation_tran
 from torch.utils.data import DataLoader, WeightedRandomSampler, Dataset
 from torchvision.io import read_image
 
-class DBD_dataset(Dataset):
-    def __init__(self, dataset, transform):
-        self.images_path = dataset[:, 0]
-        self.targets = torch.tensor(dataset[:, 1].astype(np.int64), dtype=torch.int64)
 
+class DBD_dataset(Dataset):
+    def __init__(self, dataset, transform, cache):
+        self.images_path = dataset[:, 0]
         self.transform = transform
+        self.images = None if not cache else [None] * len(self.images_path)
+
+        self.targets = torch.tensor(dataset[:, 1].astype(np.int64), dtype=torch.int64)
 
     def __len__(self):
         return len(self.targets)
 
     def __getitem__(self, idx):
-        image = self.images_path[idx]
-        image = read_image(image, mode=torchvision.io.ImageReadMode.RGB)
-        image = self.transform(image)
+        if self.images is None:
+            image = self.get_image_from_path(idx)
+        elif self.images[idx] is None:
+            image = self.get_image_from_path(idx)
+            self.images[idx] = image
+        else:
+            image = self.images[idx]
 
-        # no transform for target
         target = self.targets[idx]
-
         return image, target
 
     def _get_class_weights(self):
@@ -42,6 +47,13 @@ class DBD_dataset(Dataset):
         w = w[self.targets]
         sampler = WeightedRandomSampler(w, num_samples=len(w), replacement=True, generator=generator_torch)
         return sampler
+
+    def get_image_from_path(self, idx):
+        image = self.images_path[idx]
+        image = read_image(image, mode=torchvision.io.ImageReadMode.RGB)
+        image = self.transform(image)
+        return image
+
 
 def _parse_dbd_datasetfolder(root_dataset_path):
     folders = os.scandir(root_dataset_path)
@@ -64,7 +76,8 @@ def _parse_dbd_datasetfolder(root_dataset_path):
     dataset = np.stack([images_all, targets_all], axis=-1)
     return dataset
 
-def get_dataloaders(root_dataset_path, batch_size=32, seed=42, num_workers=0):
+
+def get_dataloaders(root_dataset_path, batch_size=32, seed=42, num_workers=0, cache=False):
     assert os.path.exists(root_dataset_path)
 
     # Parse dataset
@@ -79,16 +92,31 @@ def get_dataloaders(root_dataset_path, batch_size=32, seed=42, num_workers=0):
 
     # Set datasets
     training_transforms = get_training_transforms()
-    dataset_train = DBD_dataset(dataset_train, training_transforms)
+    dataset_train = DBD_dataset(dataset_train, training_transforms, cache=cache)
 
     validation_transforms = get_validation_transforms()
-    dataset_val = DBD_dataset(dataset_val, validation_transforms)
+    dataset_val = DBD_dataset(dataset_val, validation_transforms, cache=cache)
+
+    if cache:
+        fetcher_train = DataLoader(dataset_train, batch_size=128, num_workers=0)
+        fetcher_val = DataLoader(dataset_val, batch_size=128, num_workers=0)
+
+        print("Prefetching data...")
+
+        for _, batch in tqdm.tqdm(enumerate(fetcher_train), total=len(fetcher_train)):
+            pass
+
+        for _, batch in tqdm.tqdm(enumerate(fetcher_val), total=len(fetcher_val)):
+            pass
+
+        print("Prefetching done.")
 
     # Set dataloaders
-    dataloader_train = DataLoader(dataset_train, sampler=dataset_train.get_sampler(), batch_size=batch_size, num_workers=num_workers)
-    dataloader_val = DataLoader(dataset_val, sampler=dataset_val.get_sampler(), batch_size=batch_size, num_workers=num_workers)
+    dataloader_train = DataLoader(dataset_train, sampler=dataset_train.get_sampler(), batch_size=batch_size, num_workers=num_workers, pin_memory=True)
+    dataloader_val = DataLoader(dataset_val, sampler=dataset_val.get_sampler(), batch_size=batch_size, num_workers=num_workers, pin_memory=True)
 
     return dataloader_train, dataloader_val
+
 
 if __name__ == '__main__':
     from dbd.datasets.transforms import MEAN, STD
