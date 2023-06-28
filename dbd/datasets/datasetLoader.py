@@ -11,6 +11,7 @@ import math
 from dbd.datasets.transforms import get_training_transforms, get_validation_transforms
 from torch.utils.data import DataLoader, WeightedRandomSampler, Dataset
 from torchvision.io import read_image
+from torchvision.transforms import Compose
 
 
 class DBD_dataset(Dataset):
@@ -23,15 +24,17 @@ class DBD_dataset(Dataset):
     def __init__(self, dataset, transform, cache):
         """
         :param dataset: numpy array of [image_path, label]
-        :param transform: torchvision transforms
+        :param transform: torchvision transforms. Either whole transform or [caching, not_caching] transforms
         :param cache: bool, whether to cache images in memory or not
         """
 
         self.images_path = dataset[:, 0]
-        self.transform = transform
         self.images = None if not cache else [None] * len(self.images_path)
 
         self.targets = torch.tensor(dataset[:, 1].astype(np.int64), dtype=torch.int64)
+
+        self.transform_caching = transform[0] if isinstance(transform, tuple) else Compose([])
+        self.transform_no_caching = transform[1] if isinstance(transform, tuple) else transform
 
     def __len__(self):
         return len(self.targets)
@@ -45,6 +48,7 @@ class DBD_dataset(Dataset):
         else:
             image = self.images[idx]
 
+        image = self.transform_no_caching(image)
         target = self.targets[idx]
         return image, target
 
@@ -63,13 +67,13 @@ class DBD_dataset(Dataset):
     def get_image_from_path(self, idx):
         image = self.images_path[idx]
         image = read_image(image, mode=torchvision.io.ImageReadMode.RGB)
-        image = self.transform(image)
+        image = self.transform_caching(image)
         return image
 
     def get_dataloader(self, batch_size=32, num_workers=0, use_balanced_sampler=False):
 
         if self.images is not None:
-            fetcher = DataLoader(self, batch_size=16, num_workers=0)  # TODO: optimization + handle random
+            fetcher = DataLoader(self, batch_size=16, num_workers=0)
             for _, batch in tqdm.tqdm(enumerate(fetcher), total=len(fetcher), desc="Prefetching data"):
                 pass
 
@@ -100,7 +104,6 @@ def _parse_dbd_datasetfolder(root_dataset_path):
     return dataset
 
 
-
 def get_dataloaders(root_dataset_path, batch_size=32, seed=42, num_workers=0, cache=False):
     assert os.path.exists(root_dataset_path)
 
@@ -115,8 +118,11 @@ def get_dataloaders(root_dataset_path, batch_size=32, seed=42, num_workers=0, ca
     dataset_train, dataset_val = dataset[:nb_samples_train], dataset[nb_samples_train:]
 
     # Set datasets
-    dataset_train = DBD_dataset(dataset_train, get_training_transforms(), cache=cache)
-    dataset_val = DBD_dataset(dataset_val, get_validation_transforms(), cache=cache)
+    train_transforms = get_training_transforms(decompose=True)
+    dataset_train = DBD_dataset(dataset_train, train_transforms, cache=cache)
+
+    val_transforms = get_validation_transforms(decompose=True)
+    dataset_val = DBD_dataset(dataset_val, val_transforms, cache=cache)
 
     # Get dataloaders
     dataloader_train = dataset_train.get_dataloader(batch_size=batch_size, num_workers=num_workers, use_balanced_sampler=True)
