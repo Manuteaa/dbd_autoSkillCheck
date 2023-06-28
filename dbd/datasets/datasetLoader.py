@@ -14,7 +14,19 @@ from torchvision.io import read_image
 
 
 class DBD_dataset(Dataset):
+    """
+    Dataset class for DBD dataset
+    - Handles caching of images
+    - Handles sampler to deal with class imbalance
+    """
+
     def __init__(self, dataset, transform, cache):
+        """
+        :param dataset: numpy array of [image_path, label]
+        :param transform: torchvision transforms
+        :param cache: bool, whether to cache images in memory or not
+        """
+
         self.images_path = dataset[:, 0]
         self.transform = transform
         self.images = None if not cache else [None] * len(self.images_path)
@@ -41,7 +53,7 @@ class DBD_dataset(Dataset):
         w_mapping = 1.0 / count_classes  # all classes have equal chance to be sampled
         return w_mapping
 
-    def get_sampler(self, seed=42):
+    def _get_sampler(self, seed=42):
         generator_torch = torch.Generator().manual_seed(seed)
         w = self._get_class_weights()
         w = w[self.targets]
@@ -53,6 +65,17 @@ class DBD_dataset(Dataset):
         image = read_image(image, mode=torchvision.io.ImageReadMode.RGB)
         image = self.transform(image)
         return image
+
+    def get_dataloader(self, batch_size=32, num_workers=0, use_balanced_sampler=False):
+
+        if self.images is not None:
+            fetcher = DataLoader(self, batch_size=16, num_workers=0)  # TODO: optimization + handle random
+            for _, batch in tqdm.tqdm(enumerate(fetcher), total=len(fetcher), desc="Prefetching data"):
+                pass
+
+        sampler = self._get_sampler() if use_balanced_sampler else None
+        dataloader = DataLoader(self, batch_size=batch_size, num_workers=num_workers, sampler=sampler)
+        return dataloader
 
 
 def _parse_dbd_datasetfolder(root_dataset_path):
@@ -77,6 +100,7 @@ def _parse_dbd_datasetfolder(root_dataset_path):
     return dataset
 
 
+
 def get_dataloaders(root_dataset_path, batch_size=32, seed=42, num_workers=0, cache=False):
     assert os.path.exists(root_dataset_path)
 
@@ -91,29 +115,12 @@ def get_dataloaders(root_dataset_path, batch_size=32, seed=42, num_workers=0, ca
     dataset_train, dataset_val = dataset[:nb_samples_train], dataset[nb_samples_train:]
 
     # Set datasets
-    training_transforms = get_training_transforms()
-    dataset_train = DBD_dataset(dataset_train, training_transforms, cache=cache)
+    dataset_train = DBD_dataset(dataset_train, get_training_transforms(), cache=cache)
+    dataset_val = DBD_dataset(dataset_val, get_validation_transforms(), cache=cache)
 
-    validation_transforms = get_validation_transforms()
-    dataset_val = DBD_dataset(dataset_val, validation_transforms, cache=cache)
-
-    if cache:
-        fetcher_train = DataLoader(dataset_train, batch_size=128, num_workers=0)
-        fetcher_val = DataLoader(dataset_val, batch_size=128, num_workers=0)
-
-        print("Prefetching data...")
-
-        for _, batch in tqdm.tqdm(enumerate(fetcher_train), total=len(fetcher_train)):
-            pass
-
-        for _, batch in tqdm.tqdm(enumerate(fetcher_val), total=len(fetcher_val)):
-            pass
-
-        print("Prefetching done.")
-
-    # Set dataloaders
-    dataloader_train = DataLoader(dataset_train, sampler=dataset_train.get_sampler(), batch_size=batch_size, num_workers=num_workers, pin_memory=True)
-    dataloader_val = DataLoader(dataset_val, sampler=dataset_val.get_sampler(), batch_size=batch_size, num_workers=num_workers, pin_memory=True)
+    # Get dataloaders
+    dataloader_train = dataset_train.get_dataloader(batch_size=batch_size, num_workers=num_workers, use_balanced_sampler=True)
+    dataloader_val = dataset_val.get_dataloader(batch_size=batch_size, num_workers=num_workers, use_balanced_sampler=True)
 
     return dataloader_train, dataloader_val
 
