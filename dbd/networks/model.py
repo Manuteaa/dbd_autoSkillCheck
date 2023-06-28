@@ -61,6 +61,12 @@ class Model(pl.LightningModule):
         self.log('acc/val_1', acc_1, prog_bar=True, on_step=False, on_epoch=True)
         self.log('acc/val_2', acc_2, prog_bar=True, on_step=False, on_epoch=True)
 
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+        x, y = batch
+        pred = self(x)
+        pred = torch.argmax(pred, dim=-1)
+        return pred
+
     def forward(self, x):
         z = self.encoder(x)
         pred = self.decoder(z)
