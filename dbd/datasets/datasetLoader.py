@@ -21,20 +21,19 @@ class DBD_dataset(Dataset):
     - Handles sampler to deal with class imbalance
     """
 
-    def __init__(self, dataset, transform, cache):
+    def __init__(self, dataset, transform):
         """
         :param dataset: numpy array of [image_path, label]
         :param transform: torchvision transforms. Either whole transform or [caching, not_caching] transforms
-        :param cache: bool, whether to cache images in memory or not
         """
 
         self.images_path = dataset[:, 0]
-        self.images = None if not cache else [None] * len(self.images_path)
-
         self.targets = torch.tensor(dataset[:, 1].astype(np.int64), dtype=torch.int64)
 
-        self.transform_caching = transform[0] if isinstance(transform, tuple) else Compose([])
-        self.transform_no_caching = transform[1] if isinstance(transform, tuple) else transform
+        self.transform_caching = transform[0] if isinstance(transform, tuple) else transform
+        self.transform_no_caching = transform[1] if isinstance(transform, tuple) else Compose([])
+
+        self.images = None  # cached images
 
     def __len__(self):
         return len(self.targets)
@@ -42,9 +41,6 @@ class DBD_dataset(Dataset):
     def __getitem__(self, idx):
         if self.images is None:
             image = self.get_image_from_path(idx)
-        elif self.images[idx] is None:
-            image = self.get_image_from_path(idx)
-            self.images[idx] = image
         else:
             image = self.images[idx]
 
@@ -64,6 +60,20 @@ class DBD_dataset(Dataset):
         sampler = WeightedRandomSampler(w, num_samples=len(w), replacement=True, generator=generator_torch)
         return sampler
 
+    def prefetch_images(self, batch_size=32, num_workers=8):
+        transform_caching = self.transform_no_caching  # deep copy
+        self.transform_no_caching = Compose([])  # Do not apply transform_no_caching when prefetching
+
+        fetcher = DataLoader(self, batch_size=batch_size, num_workers=num_workers)
+        images = []
+        for _, batch in tqdm.tqdm(enumerate(fetcher), total=len(fetcher), desc="Prefetching data"):
+            x, y = batch
+            images.append(x)
+
+        images = torch.cat(images, dim=0)
+        self.images = images
+        self.transform_no_caching = transform_caching
+
     def get_image_from_path(self, idx):
         image = self.images_path[idx]
         image = read_image(image, mode=torchvision.io.ImageReadMode.RGB)
@@ -71,12 +81,6 @@ class DBD_dataset(Dataset):
         return image
 
     def get_dataloader(self, batch_size=32, num_workers=0, use_balanced_sampler=False):
-
-        if self.images is not None:
-            fetcher = DataLoader(self, batch_size=16, num_workers=0)
-            for _, batch in tqdm.tqdm(enumerate(fetcher), total=len(fetcher), desc="Prefetching data"):
-                pass
-
         sampler = self._get_sampler() if use_balanced_sampler else None
         dataloader = DataLoader(self, batch_size=batch_size, num_workers=num_workers, sampler=sampler)
         return dataloader
@@ -117,15 +121,15 @@ def get_dataloaders(root_dataset_path, batch_size=32, seed=42, num_workers=0, ca
     nb_samples_train = math.floor(0.8 * len(dataset))
     dataset_train, dataset_val = dataset[:nb_samples_train], dataset[nb_samples_train:]
 
-    # Set datasets
+    # Set dataloader
     train_transforms = get_training_transforms(decompose=True)
-    dataset_train = DBD_dataset(dataset_train, train_transforms, cache=cache)
+    dataset_train = DBD_dataset(dataset_train, train_transforms)
+    if cache: dataset_train.prefetch_images()
+    dataloader_train = dataset_train.get_dataloader(batch_size=batch_size, num_workers=num_workers, use_balanced_sampler=True)
 
     val_transforms = get_validation_transforms(decompose=True)
-    dataset_val = DBD_dataset(dataset_val, val_transforms, cache=cache)
-
-    # Get dataloaders
-    dataloader_train = dataset_train.get_dataloader(batch_size=batch_size, num_workers=num_workers, use_balanced_sampler=True)
+    dataset_val = DBD_dataset(dataset_val, val_transforms)
+    if cache: dataset_val.prefetch_images()
     dataloader_val = dataset_val.get_dataloader(batch_size=batch_size, num_workers=num_workers, use_balanced_sampler=True)
 
     return dataloader_train, dataloader_val
