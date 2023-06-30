@@ -130,7 +130,7 @@ def get_dataloaders(root_dataset_path, batch_size=32, seed=42, num_workers=0, ca
     val_transforms = get_validation_transforms(decompose=True)
     dataset_val = DBD_dataset(dataset_val, val_transforms)
     if cache: dataset_val.prefetch_images()
-    dataloader_val = dataset_val.get_dataloader(batch_size=batch_size, num_workers=num_workers, use_balanced_sampler=True)
+    dataloader_val = dataset_val.get_dataloader(batch_size=batch_size, num_workers=num_workers, use_balanced_sampler=False)
 
     return dataloader_train, dataloader_val
 
