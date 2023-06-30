@@ -54,11 +54,16 @@ def test_dbd_dataset_sampler():
     assert sampler.num_samples == len(dbd_dataset)
 
     w = sampler.weights
-    counts = torch.unique(dbd_dataset.targets, return_counts=True)[1]
 
-    for class_idx in range(len(counts)):
-        w_sum = torch.sum(w[dbd_dataset.targets == class_idx])
-        assert torch.abs(w_sum - 1.0) < 1e-5
+    # counts = torch.unique(dbd_dataset.targets, return_counts=True)[1]
+    # compute sum of weights for each class
+    # for class_idx in range(len(counts)):
+    #     w_sum = torch.sum(w[dbd_dataset.targets == class_idx])
+    #     assert torch.allclose(w_sum, torch.ones_like(w_sum))
+
+    # compute sum of weights for each class without for loop
+    w_sum = torch.bincount(dbd_dataset.targets, weights=w)
+    assert torch.allclose(w_sum, torch.ones_like(w_sum))
 
 
 def test_dbd_fetching():
