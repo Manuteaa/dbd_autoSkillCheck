@@ -15,15 +15,15 @@ def infer_from_folder(folder, checkpoint):
     images = np.array([[image, 0] for image in images])
 
     test_transforms = get_validation_transforms()
-    dataset = DBD_dataset(images, test_transforms, cache=False)
+    dataset = DBD_dataset(images, test_transforms)
     dataloader = dataset.get_dataloader(batch_size=128, num_workers=8)
 
     # Model
     checkpoint = glob(os.path.join(checkpoint, "*.ckpt"))[-1]
     assert os.path.isfile(checkpoint)
 
-    model = Model(lr=1e-4)
-    trainer = pl.Trainer(accelerator='gpu', devices=1)
+    model = Model()
+    trainer = pl.Trainer(accelerator='gpu', devices=1, logger=False)
     preds = trainer.predict(model=model, dataloaders=dataloader, return_predictions=True, ckpt_path=checkpoint)
     preds = np.concatenate([pred.cpu().numpy() for pred in preds], axis=0)
 
