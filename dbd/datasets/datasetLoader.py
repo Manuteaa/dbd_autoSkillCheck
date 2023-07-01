@@ -57,10 +57,10 @@ class DBD_dataset(Dataset):
         generator_torch = torch.Generator().manual_seed(seed)
         w = self._get_class_weights()
         w = w[self.targets]
-        sampler = WeightedRandomSampler(w, num_samples=len(w), replacement=True, generator=generator_torch)
+        sampler = WeightedRandomSampler(w, num_samples=2*len(w), replacement=True, generator=generator_torch)
         return sampler
 
-    def prefetch_images(self, batch_size=32, num_workers=8):
+    def prefetch_images(self, batch_size=64, num_workers=8):
         transform_caching = self.transform_no_caching  # deep copy
         self.transform_no_caching = Compose([])  # Do not apply transform_no_caching when prefetching
 
@@ -82,7 +82,7 @@ class DBD_dataset(Dataset):
 
     def get_dataloader(self, batch_size=32, num_workers=0, use_balanced_sampler=False):
         sampler = self._get_sampler() if use_balanced_sampler else None
-        dataloader = DataLoader(self, batch_size=batch_size, num_workers=num_workers, sampler=sampler)
+        dataloader = DataLoader(self, batch_size=batch_size, num_workers=num_workers, sampler=sampler, pin_memory=True)
         return dataloader
 
 
