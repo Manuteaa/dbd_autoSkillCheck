@@ -10,7 +10,11 @@ class Model(pl.LightningModule):
         self.decoder = self.build_decoder()
         self.lr = lr
 
-        self.accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=3, average=None)
+        self.precision_train = torchmetrics.Precision(task='multiclass', num_classes=3, average=None)
+        self.recall_train = torchmetrics.Recall(task='multiclass', num_classes=3, average=None)
+
+        self.precision_val = torchmetrics.Precision(task='multiclass', num_classes=3, average=None)
+        self.recall_val = torchmetrics.Recall(task='multiclass', num_classes=3, average=None)
 
     def build_encoder(self):
         weights = models.MobileNet_V3_Large_Weights.DEFAULT
@@ -35,31 +39,35 @@ class Model(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-
         pred = self(x)
 
         loss = torch.nn.functional.cross_entropy(pred, y)
-        acc_0, acc_1, acc_2 = self.accuracy(pred, y)
+        pres_0, pres_1, pres_2 = self.precision_train(pred, y)
+        rec_0, rec_1, rec_2 = self.recall_train(pred, y)
 
         self.log("loss/train", loss)
-        self.log('acc/train_0', acc_0, prog_bar=True, on_step=False, on_epoch=True)
-        self.log('acc/train_1', acc_1, prog_bar=True, on_step=False, on_epoch=True)
-        self.log('acc/train_2', acc_2, prog_bar=True, on_step=False, on_epoch=True)
+        self.log_dict({
+                  'pres/train_0': pres_0, 'pres/train_1': pres_1, 'pres/train_2': pres_2,
+                  'rec/train_0': rec_0, 'rec/train_1': rec_1, 'rec/train_2': rec_2
+        })
 
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-
         pred = self(x)
 
         loss = torch.nn.functional.cross_entropy(pred, y)
-        acc_0, acc_1, acc_2 = self.accuracy(pred, y)
+        pres_0, pres_1, pres_2 = self.precision_val(pred, y)
+        rec_0, rec_1, rec_2 = self.recall_val(pred, y)
 
         self.log("loss/val", loss)
-        self.log('acc/val_0', acc_0, prog_bar=True, on_step=False, on_epoch=True)
-        self.log('acc/val_1', acc_1, prog_bar=True, on_step=False, on_epoch=True)
-        self.log('acc/val_2', acc_2, prog_bar=True, on_step=False, on_epoch=True)
+        self.log_dict({
+                    'pres/val_0': pres_0, 'pres/val_1': pres_1, 'pres/val_2': pres_2,
+                    'rec/val_0': rec_0, 'rec/val_1': rec_1, 'rec/val_2': rec_2
+        })
+
+        return loss
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         x, y = batch
