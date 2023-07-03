@@ -25,7 +25,7 @@ if __name__ == '__main__':
     valid.validate(model=model, dataloaders=dataloader_val)
 
     # Training
-    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=1000)
+    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=1000, num_sanity_val_steps=0)
     trainer.fit(model=model, train_dataloaders=dataloader_train, val_dataloaders=dataloader_val)
 
     # tensorboard --logdir=lightning_logs/
