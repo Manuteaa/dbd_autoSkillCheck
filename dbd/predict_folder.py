@@ -36,7 +36,6 @@ if __name__ == '__main__':
     checkpoint = "./lightning_logs/version_2/checkpoints"
     preds = infer_from_folder(dataset_root, checkpoint)
 
-    assert os.path.isdir(dataset_root)
     os.makedirs(os.path.join(dataset_root, "0"), exist_ok=True)
     os.makedirs(os.path.join(dataset_root, "1"), exist_ok=True)
     os.makedirs(os.path.join(dataset_root, "2"), exist_ok=True)
