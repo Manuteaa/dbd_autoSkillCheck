@@ -26,4 +26,4 @@ if __name__ == '__main__':
     if not os.path.exists(destination_folder):
         os.mkdir(destination_folder)
 
-    move_images(source_folder, destination_folder, 5)
+    move_images(source_folder, destination_folder, 20)
