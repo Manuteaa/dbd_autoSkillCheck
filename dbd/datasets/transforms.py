@@ -11,7 +11,7 @@ def get_training_transforms(decompose=False):
 
     transforms_no_cache = tf.Compose([
         tf.RandomRotation(180),
-        tf.RandomResizedCrop(224, scale=(0.8, 1.0)),
+        tf.RandomResizedCrop(224, scale=(0.6, 1.0)),
         tf.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
         tf.Normalize(mean=MEAN, std=STD)
         ])
