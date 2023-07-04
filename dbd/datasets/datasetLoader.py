@@ -57,7 +57,7 @@ class DBD_dataset(Dataset):
         generator_torch = torch.Generator().manual_seed(seed)
         w = self._get_class_weights()
         w = w[self.targets]
-        sampler = WeightedRandomSampler(w, num_samples=2*len(w), replacement=True, generator=generator_torch)
+        sampler = WeightedRandomSampler(w, num_samples=len(w), replacement=True, generator=generator_torch)
         return sampler
 
     def prefetch_images(self, batch_size=64, num_workers=8):
@@ -139,7 +139,7 @@ if __name__ == '__main__':
     from dbd.datasets.transforms import MEAN, STD
 
     dataset_root = "dataset/"
-    dataloader_train, dataloader_val = get_dataloaders(dataset_root)
+    dataloader_train, dataloader_val = get_dataloaders(dataset_root, batch_size=1)
 
     std = torch.tensor(STD, dtype=torch.float32).reshape((3, 1, 1))
     mean = torch.tensor(MEAN, dtype=torch.float32).reshape((3, 1, 1))
