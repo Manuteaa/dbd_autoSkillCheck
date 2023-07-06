@@ -82,7 +82,7 @@ class DBD_dataset(Dataset):
 
     def get_dataloader(self, batch_size=32, num_workers=0, use_balanced_sampler=False):
         sampler = self._get_sampler() if use_balanced_sampler else None
-        dataloader = DataLoader(self, batch_size=batch_size, num_workers=num_workers, sampler=sampler, pin_memory=True)
+        dataloader = DataLoader(self, batch_size=batch_size, num_workers=num_workers, sampler=sampler, persistent_workers=True, pin_memory=True)
         return dataloader
 
 
