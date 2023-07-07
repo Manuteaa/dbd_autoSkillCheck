@@ -13,3 +13,13 @@ def get_monitor_attributes():
 
     return monitor
 
+def get_monitor_attributes_test():
+    width, height = pyautogui.size()
+    object_size = 224
+
+    monitor = {"top": height // 2 - object_size // 2,
+               "left": width // 2 - object_size // 2,
+               "width": object_size,
+               "height": object_size}
+
+    return monitor
