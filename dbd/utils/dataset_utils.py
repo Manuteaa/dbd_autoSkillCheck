@@ -5,9 +5,8 @@ import numpy as np
 
 
 def delete_similar_images(files):
-    # similar_frames = []
+    similar_frames = 0
     for i in tqdm.tqdm(range(len(files)-1)):
-    # for i in range(len(files)-1):
         im1 = files[i]
         im2 = files[i+1]
 
@@ -19,9 +18,12 @@ def delete_similar_images(files):
         diff = np.mean(diff) / 255.
 
         # print(diff, im1, im2)
-        if diff < 0.2:
+        if diff < 0.01:
             os.remove(im1)
+            similar_frames += 1
             # print("deleting {} with score {}".format(im1, diff))
+
+    print("deleted {} similar frames".format(similar_frames))
 
 
 def delete_consecutive_images(files, n):
