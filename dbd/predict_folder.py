@@ -32,11 +32,12 @@ def infer_from_folder(folder, checkpoint):
 
 
 if __name__ == '__main__':
-    dataset_root = "dataset/20230617-142505"
-    checkpoint = "./lightning_logs/version_2/checkpoints"
-    preds = infer_from_folder(dataset_root, checkpoint)
+    dataset_root = "dataset/2bis"
+    checkpoint = "./lightning_logs/version_0/checkpoints"
 
     assert os.path.isdir(dataset_root)
+    preds = infer_from_folder(dataset_root, checkpoint)
+
     os.makedirs(os.path.join(dataset_root, "0"), exist_ok=True)
     os.makedirs(os.path.join(dataset_root, "1"), exist_ok=True)
     os.makedirs(os.path.join(dataset_root, "2"), exist_ok=True)
