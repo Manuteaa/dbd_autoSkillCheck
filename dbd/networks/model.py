@@ -4,7 +4,7 @@ import torch
 import torchvision.models as models
 
 class Model(pl.LightningModule):
-    def __init__(self, lr=1e-3):
+    def __init__(self, lr=1e-4):
         super().__init__()
         self.encoder = self.build_encoder()
         self.decoder = self.build_decoder()
@@ -28,8 +28,8 @@ class Model(pl.LightningModule):
         # encoder = models.convnext_tiny(weights=weights)
 
         # Freeze encoder
-        for param in encoder.parameters():
-            param.requires_grad = False
+        # for param in encoder.parameters():
+        #     param.requires_grad = False
 
         return encoder
 
@@ -95,5 +95,5 @@ class Model(pl.LightningModule):
         return pred
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=1e-5)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
