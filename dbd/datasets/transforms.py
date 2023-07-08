@@ -34,11 +34,3 @@ def get_validation_transforms(decompose=False):
         return transforms_cache, transforms_no_cache
 
     return tf.Compose([transforms_cache, transforms_no_cache])
-
-def get_test_transforms():
-    transforms = tf.Compose([
-        tf.ToTensor(),
-        tf.Normalize(mean=MEAN, std=STD)
-    ])
-
-    return transforms
