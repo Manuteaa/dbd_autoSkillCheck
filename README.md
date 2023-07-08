@@ -84,16 +84,11 @@ and an even faster 2ms per frame with MNASNet 0.5. When combined with our screen
 we achieved a consistent 60fps detection rate, which is enough for real-time detection capabilities.
 
 However, we encountered an unplanned challenge during actual gameplay. Despite successfully detecting and reacting to the great skill check 
-within a response time of 2ms to 10ms, we faced with inherent latency issues commonly found in multiplayer games.
+within a response time of 2ms to 10ms, we faced inherent latency issues commonly found in multiplayer games.
 Consequently, despite the quick decisions of the model, we still missed the great skill check.
 
 To address this issue, we propose a solution: anticipating and hitting the great skill check a few frames in advance. 
 For instance, we can develop a model that estimates the time it takes for the red cursor to reach the great white zone. 
 Following variables such as the user's network latency to the game server, we can hit the space bar preemptively. 
 This approach aligns with the natural behavior of real players who intuitively anticipate and time their actions based on the red cursor's movement speed. 
-
-We will implement this strategy in future work (link here).
-
-In summary, our model excels at real-time detection and successfully detecting great skill checks with remarkable precision. 
-Yet, achieving effective execution of the great skill check during live gameplay necessitates anticipation, 
-which can be accomplished by implementing the proposed strategy.
+We will implement this strategy in future work.
