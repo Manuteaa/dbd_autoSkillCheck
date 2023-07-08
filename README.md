@@ -91,8 +91,9 @@ To address this issue, we propose a solution: anticipating and hitting the great
 For instance, we can develop a model that estimates the time it takes for the red cursor to reach the great white zone. 
 Following variables such as the user's network latency to the game server, we can hit the space bar preemptively. 
 This approach aligns with the natural behavior of real players who intuitively anticipate and time their actions based on the red cursor's movement speed. 
-We will implement this strategy in future work.
 
-In summary, our model excels at real-time detection and successfully hitting great skill checks with remarkable precision. 
+We will implement this strategy in future work (link here).
+
+In summary, our model excels at real-time detection and successfully detecting great skill checks with remarkable precision. 
 Yet, achieving effective execution of the great skill check during live gameplay necessitates anticipation, 
 which can be accomplished by implementing the proposed strategy.
