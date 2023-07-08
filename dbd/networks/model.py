@@ -24,8 +24,8 @@ class Model(pl.LightningModule):
         weights = models.MobileNet_V3_Large_Weights.DEFAULT
         encoder = models.mobilenet_v3_large(weights=weights)
 
-        # weights = models.ConvNeXt_Tiny_Weights.DEFAULT
-        # encoder = models.convnext_tiny(weights=weights)
+        # weights = models.MNASNet0_5_Weights.DEFAULT
+        # encoder = models.mnasnet0_5(weights=weights)
 
         # Freeze encoder
         # for param in encoder.parameters():
