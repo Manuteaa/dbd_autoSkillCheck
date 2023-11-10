@@ -2,7 +2,6 @@ import os.path
 import torch
 import numpy as np
 from glob import glob
-import tqdm
 
 import torchvision.io
 from PIL import Image
@@ -11,40 +10,31 @@ import math
 from dbd.datasets.transforms import get_training_transforms, get_validation_transforms
 from torch.utils.data import DataLoader, WeightedRandomSampler, Dataset
 from torchvision.io import read_image
-from torchvision.transforms import Compose
 
 
 class DBD_dataset(Dataset):
     """
     Dataset class for DBD dataset
-    - Handles caching of images
-    - Handles sampler to deal with class imbalance
+    - Handles custom sampler to deal with class imbalance
     """
 
-    def __init__(self, dataset, transform):
+    def __init__(self, dataset, transforms):
         """
-        :param dataset: numpy array of [image_path, label]
-        :param transform: torchvision transforms. Either whole transform or [caching, not_caching] transforms
+        :param dataset: numpy array of {image_path, label}
+        :param transforms: torchvision transforms
         """
 
         self.images_path = dataset[:, 0]
         self.targets = torch.tensor(dataset[:, 1].astype(np.int64), dtype=torch.int64)
-
-        self.transform_caching = transform[0] if isinstance(transform, tuple) else transform
-        self.transform_no_caching = transform[1] if isinstance(transform, tuple) else Compose([])
-
-        self.images = None  # cached images
+        self.transforms = transforms
 
     def __len__(self):
         return len(self.targets)
 
     def __getitem__(self, idx):
-        if self.images is None:
-            image = self.get_image_from_path(idx)
-        else:
-            image = self.images[idx]
+        image = self.get_image_from_path(idx)
+        image = self.transforms(image)
 
-        image = self.transform_no_caching(image)
         target = self.targets[idx]
         return image, target
 
@@ -60,24 +50,9 @@ class DBD_dataset(Dataset):
         sampler = WeightedRandomSampler(w, num_samples=len(w), replacement=True, generator=generator_torch)
         return sampler
 
-    def prefetch_images(self, batch_size=64, num_workers=8):
-        transform_caching = self.transform_no_caching  # deep copy
-        self.transform_no_caching = Compose([])  # Do not apply transform_no_caching when prefetching
-
-        fetcher = DataLoader(self, batch_size=batch_size, num_workers=num_workers)
-        images = []
-        for _, batch in tqdm.tqdm(enumerate(fetcher), total=len(fetcher), desc="Prefetching data"):
-            x, y = batch
-            images.append(x)
-
-        images = torch.cat(images, dim=0)
-        self.images = images
-        self.transform_no_caching = transform_caching
-
     def get_image_from_path(self, idx):
         image = self.images_path[idx]
         image = read_image(image, mode=torchvision.io.ImageReadMode.RGB)
-        image = self.transform_caching(image)
         return image
 
     def get_dataloader(self, batch_size=32, num_workers=0, use_balanced_sampler=False):
@@ -87,6 +62,14 @@ class DBD_dataset(Dataset):
 
 
 def _parse_dbd_datasetfolder(root_dataset_path):
+    """
+    Get dataset as list of pairs {image path, label} in numpy array format
+    Args:
+        root_dataset_path:
+
+    Returns: numpy array with shape (nb_images, 2), data type is str
+
+    """
     folders = os.scandir(root_dataset_path)
     images_all = []
     targets_all = []
@@ -108,11 +91,19 @@ def _parse_dbd_datasetfolder(root_dataset_path):
     return dataset
 
 
-def get_dataloaders(root_dataset_path, batch_size=32, seed=42, num_workers=0, cache=False):
+def get_dataloaders(root_dataset_path, batch_size=32, seed=42, num_workers=0):
+    """  Get training and validation data loaders
+    Args:
+        root_dataset_path: Root dataset path, containing folders with name corresponding to associated class
+        batch_size: batch size
+        seed: seed to init random generators
+        num_workers: data loader num workers
+
+    """
     assert os.path.exists(root_dataset_path)
 
     # Parse dataset
-    dataset = _parse_dbd_datasetfolder(root_dataset_path)
+    dataset = _parse_dbd_datasetfolder(root_dataset_path)  # shape is (nb_images, 2)
 
     # Shuffle dataset and split into a training set and a validation set
     generator = np.random.default_rng(seed)
@@ -121,15 +112,13 @@ def get_dataloaders(root_dataset_path, batch_size=32, seed=42, num_workers=0, ca
     nb_samples_train = math.floor(0.8 * len(dataset))
     dataset_train, dataset_val = dataset[:nb_samples_train], dataset[nb_samples_train:]
 
-    # Set dataloader
-    train_transforms = get_training_transforms(decompose=True)
+    # Set data loaders
+    train_transforms = get_training_transforms()
     dataset_train = DBD_dataset(dataset_train, train_transforms)
-    if cache: dataset_train.prefetch_images()
     dataloader_train = dataset_train.get_dataloader(batch_size=batch_size, num_workers=num_workers, use_balanced_sampler=True)
 
-    val_transforms = get_validation_transforms(decompose=True)
+    val_transforms = get_validation_transforms()
     dataset_val = DBD_dataset(dataset_val, val_transforms)
-    if cache: dataset_val.prefetch_images()
     dataloader_val = dataset_val.get_dataloader(batch_size=batch_size, num_workers=num_workers, use_balanced_sampler=False)
 
     return dataloader_train, dataloader_val

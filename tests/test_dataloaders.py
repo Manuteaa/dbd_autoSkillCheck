@@ -10,7 +10,7 @@ def test_dataset_parsing():
 
 
 def test_get_dataloaders():
-    dataloader_train, dataloader_val = datasetLoader.get_dataloaders(dataset_root, batch_size=2)
+    dataloader_train, dataloader_val = datasetLoader.get_dataloaders(dataset_root, batch_size=2, num_workers=1)
     assert len(dataloader_train) > 0
     assert len(dataloader_val) > 0
 

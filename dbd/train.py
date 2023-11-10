@@ -8,14 +8,14 @@ from dbd.networks.model import Model
 
 if __name__ == '__main__':
     ##########################################################
-    checkpoint = "./lightning_logs/version_0/checkpoints"
+    checkpoint = "./lightning_logs/mobilenet_v3/checkpoints"
     dataset_root = "dataset/"
 
     ##########################################################
     checkpoint = glob.glob(os.path.join(checkpoint, "*.ckpt"))[-1]
 
     # Dataset
-    dataloader_train, dataloader_val = get_dataloaders(dataset_root, num_workers=8, cache=True)
+    dataloader_train, dataloader_val = get_dataloaders(dataset_root, num_workers=8)
 
     # Model
     # model = Model(lr=1e-4)
@@ -25,8 +25,8 @@ if __name__ == '__main__':
     valid.validate(model=model, dataloaders=dataloader_val)
 
     # Training
-    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=1000, num_sanity_val_steps=0)
-    trainer.fit(model=model, train_dataloaders=dataloader_train, val_dataloaders=dataloader_val)
+    # trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=1000, num_sanity_val_steps=0)
+    # trainer.fit(model=model, train_dataloaders=dataloader_train, val_dataloaders=dataloader_val)
 
     # tensorboard --logdir=lightning_logs/
 

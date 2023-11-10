@@ -40,7 +40,7 @@ The data was manually divided into three separate folders based on the following
 To alleviate the laborious collection task, we employed data augmentation techniques such as random rotations, random crop-resize, and random brightness/contrast/saturation adjustments.
 
 We developed a customized and optimized dataloader that automatically parses the dataset folder and assigns the correct label to each image based on its corresponding folder.
-Our dataloader allows caching the dataset into RAM to speed up the training process, and use a custom sampler to handle imbalanced data.
+Our data loaders use a custom sampler to handle imbalanced data.
 
 ## Architecture
 The skill check detection system is based on an encoder-decoder architecture. 
