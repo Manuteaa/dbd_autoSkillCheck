@@ -1,4 +1,5 @@
 import pytorch_lightning as pl
+from pytorch_lightning.utilities.model_summary import ModelSummary
 import glob
 import os
 
@@ -20,6 +21,9 @@ if __name__ == '__main__':
     # Model
     # model = Model(lr=1e-4)
     model = Model.load_from_checkpoint(checkpoint, strict=True, lr=1e-4)
+
+    summary = ModelSummary(model, max_depth=2)
+    print(summary)
 
     valid = pl.Trainer(accelerator='gpu', devices=1, logger=False)
     valid.validate(model=model, dataloaders=dataloader_val)

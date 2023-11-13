@@ -46,6 +46,7 @@ if __name__ == '__main__':
     iterations = 0
     start_time = time.time()
     print("FPS: 0")
+    img_idx = 0
 
     with mss.mss() as sct:
         with torch.no_grad():
@@ -59,17 +60,13 @@ if __name__ == '__main__':
 
                 # Hit spacebar
                 if pred == 2:
-                    PressKey(SPACE)
+                    # PressKey(SPACE)
                     # screenshot2 = sct.grab(monitor)
-                    ReleaseKey(SPACE)
+                    # ReleaseKey(SPACE)
 
-                    # img = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
-                    # img.save("img_hit.png")
-                    #
-                    # img2 = Image.frombytes("RGB", screenshot2.size, screenshot2.bgra, "raw", "BGRX")
-                    # img2.save("img_after_hit.png")
-                    #
-                    # exit(0)
+                    img = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
+                    img.save("dataset/{}.png".format(img_idx))
+                    img_idx += 1
 
                 # Print fps
                 iterations += 1

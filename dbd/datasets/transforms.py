@@ -12,7 +12,6 @@ def get_training_transforms():
         tf.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
         tf.Normalize(mean=MEAN, std=STD)
     ])
-
     return transforms
 
 def get_validation_transforms():
@@ -21,5 +20,4 @@ def get_validation_transforms():
         tf.CenterCrop(224),
         tf.Normalize(mean=MEAN, std=STD)
     ])
-
     return transforms

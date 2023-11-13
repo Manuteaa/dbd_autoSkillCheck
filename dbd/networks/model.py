@@ -6,6 +6,8 @@ import torchvision.models as models
 class Model(pl.LightningModule):
     def __init__(self, lr=1e-4):
         super().__init__()
+        self.example_input_array = torch.zeros((32, 3, 224, 224), dtype=torch.float32)
+
         self.encoder = self.build_encoder()
         self.decoder = self.build_decoder()
         self.lr = lr

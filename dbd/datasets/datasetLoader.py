@@ -4,7 +4,6 @@ import numpy as np
 from glob import glob
 
 import torchvision.io
-from PIL import Image
 import math
 
 from dbd.datasets.transforms import get_training_transforms, get_validation_transforms
@@ -76,13 +75,12 @@ def _parse_dbd_datasetfolder(root_dataset_path):
 
     for folder in folders:
         name, path = folder.name, folder.path
-        if name.isdigit():
-            print("Parsing folder " + name)
-        else:
+        if not name.isdigit():
             print("Skipping folder " + name)
             continue
 
         images = glob(os.path.join(path, "*.*")) + glob(os.path.join(path, "*", "*.*"))
+        print("Parsing folder {} : {} images found".format(name, len(images)))
 
         images_all += images
         targets_all += [name] * len(images)
@@ -126,21 +124,26 @@ def get_dataloaders(root_dataset_path, batch_size=32, seed=42, num_workers=0):
 
 if __name__ == '__main__':
     from dbd.datasets.transforms import MEAN, STD
+    import cv2
 
     dataset_root = "dataset/"
-    dataloader_train, dataloader_val = get_dataloaders(dataset_root, batch_size=1)
+    dataloader_train, dataloader_val = get_dataloaders(dataset_root, batch_size=1, num_workers=1)
 
     std = torch.tensor(STD, dtype=torch.float32).reshape((3, 1, 1))
     mean = torch.tensor(MEAN, dtype=torch.float32).reshape((3, 1, 1))
+
+    batch = next(iter(dataloader_train))
+    x, y = batch
+
     for i, batch in enumerate(dataloader_train):
         x, y = batch
         x = x[0]  # take first sample
         x = x * std + mean  # un-normalization to [0, 1] with auto-broadcast
         x = x * 255.
 
-        x = x.permute((1, 2, 0))  # channel last
+        x = x.permute((1, 2, 0))  # channel last : (3, 224, 224) --> (224, 224, 3)
         x = x.cpu().numpy().astype(np.uint8)
 
-        img = Image.fromarray(x, "RGB")
-        img.save(os.path.join(dataset_root, "{}.jpg".format(i)))
-        print("Saving {}.jpg".format(i))
+        img = cv2.cvtColor(x, cv2.COLOR_RGB2BGR)
+        cv2.imshow("image", img)
+        cv2.waitKey()
