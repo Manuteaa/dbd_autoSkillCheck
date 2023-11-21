@@ -4,3 +4,4 @@ dataset/
 .idea/
 *.pyc
 lightning_logs/
+.ipynb_*
