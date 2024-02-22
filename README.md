@@ -9,6 +9,23 @@ This tool is designed to improve gameplay performance and enhance the player's s
 - Automatic triggering of great skill checks through auto-pressing the space bar
 
 
+## Execution Instructions
+I have only tested the model on my own computer running Windows 11 with CUDA version 12.3.
+To give it a try, you need the following files :
+- The trained model file : `/model.onnx`
+- The script for execution : `/run.py`
+- The file to auto press the SPACE key : `/dbd/utils/directkeys.py`
+
+Create your own python env (I have python 3.11) and install the necessary libraries using the command :
+`pip3 install numpy mss onnxruntime pyautogui IPython pillow`
+
+Run the script
+`python run.py`
+
+Your main screen is now monitored meaning that frames are regularly sampled (with a center-crop) and analysed with the trained model.
+You can play or watch a video of dbd and display it on your main monitor (you can check the used monitor settings using the dedicated debug line int the run.py script).
+When a great skill check is detected, the SPACE key is automatically pressed, then it waits for 2s to avoid triggering the same skill check multiple times in a row.
+
 ## What is a skill check
 
 A skill check is a game mechanic in Dead by Daylight that allows the player to progress faster in a specific action such as repairing generators or healing teammates.
