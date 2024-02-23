@@ -49,7 +49,7 @@ if __name__ == '__main__':
     input_name = ort_session.get_inputs()[0].name
 
     img_folder = "saved_images"
-    if save_images and not os.path.isdir(img_folder):
+    if (save_images or debug_monitor) and not os.path.isdir(img_folder):
         os.mkdir(img_folder)
 
     with mss.mss() as sct:
@@ -60,7 +60,7 @@ if __name__ == '__main__':
             screenshot = sct.grab(monitor)
             img = screenshot_to_numpy(screenshot)
 
-            # To check the monitor settings, uncomment the 2 following lines and check the image data/monitored_image.png
+            # To check the monitor settings
             if debug_monitor:
                 image = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
                 image.save(os.path.join(img_folder, "monitored_image.png"))
@@ -73,7 +73,7 @@ if __name__ == '__main__':
             if pred == 2:
                 PressKey(SPACE)
                 ReleaseKey(SPACE)
-                sleep(1000)
+                sleep(1)
 
                 if save_images:
                     img = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
