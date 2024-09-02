@@ -1,15 +1,16 @@
-import pytorch_lightning as pl
-from pytorch_lightning.utilities.model_summary import ModelSummary
 import glob
 import os
+
+import pytorch_lightning as pl
+from pytorch_lightning.utilities.model_summary import ModelSummary
 
 from dbd.datasets.datasetLoader import get_dataloaders
 from dbd.networks.model import Model
 
-
 if __name__ == '__main__':
     ##########################################################
-    checkpoint = "./lightning_logs/mobilenet_v3/checkpoints"
+    # checkpoint = "./lightning_logs/mobilenet_v3/checkpoints"
+    checkpoint = "./lightning_logs/version_0/checkpoints"
     dataset_root = "dataset/"
 
     ##########################################################
@@ -29,8 +30,7 @@ if __name__ == '__main__':
     valid.validate(model=model, dataloaders=dataloader_val)
 
     # Training
-    # trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=1000, num_sanity_val_steps=0)
-    # trainer.fit(model=model, train_dataloaders=dataloader_train, val_dataloaders=dataloader_val)
+    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=100, num_sanity_val_steps=0, precision="16-mixed")
+    trainer.fit(model=model, train_dataloaders=dataloader_train, val_dataloaders=dataloader_val)
 
     # tensorboard --logdir=lightning_logs/
-
