@@ -40,7 +40,7 @@ Here are examples of different great skill checks:
 
 |              Great skill check (type 1)              |              Great skill check (type 2)              |              Great skill check (type 3)              |
 |:----------------------------------------------------:|:----------------------------------------------------:|:----------------------------------------------------:|
-| ![](tests/data/2/20230617-140530_11483.png "Type 1") | ![](tests/data/2/20230617-140530_39896.png "Type 2") | ![](tests/data/2/20230617-142505_22039.png "Type 2") |
+| ![](tests/data/type/20230617-140530_11483.png "Type 1") | ![](tests/data/type/20230617-140530_39896.png "Type 2") | ![](tests/data/type/20230617-142505_22039.png "Type 2") |
 
 Successfully hitting a skill check increases the speed of the corresponding action, and a greatly successful skill check provides even greater rewards. 
 On the other hand, missing a skill check reduces the action's progression speed and alerts the ennemi with a loud sound.
@@ -109,3 +109,15 @@ For instance, we can develop a model that estimates the time it takes for the re
 Following variables such as the user's network latency to the game server, we can hit the space bar preemptively. 
 This approach aligns with the natural behavior of real players who intuitively anticipate and time their actions based on the red cursor's movement speed. 
 We will implement this strategy in future work.
+
+## NEW VERSION
+The current new model is an alpha version, and may not work properly yet.
+
+Here the different categories the models may predict correctly :
+
+
+| Folder 0                                                  |                                                                                                          Folder 1                                                                                                           |                                                       Folder 2                                                       | Folder 3                                                                                                                                                                   |                                                     Folder 4                                                      |
+|-----------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------:|
+| No skill check in screenshot                              |                                                                         Red cursor in Great area or post-Great area in single rotation skill checks                                                                         |                          Red cursor overlapping both Great area pixels and Fail area pixels                          | Red cursor a bit before Great area but does not overlap pixels of Great area (The AI may press the hit button for these images)                                            |                                          Red cursor far from Great area                                           |
+| ![](tests/data/0/20240831-155507-%f_24927.png "Folder 0") | ![](tests/data/1/20230617-140530_40954.png "Folder 1") ![](tests/data/1/20240830-234634-%f_837.png "Folder 1") ![](tests/data/1/20230617-144915_12291.png "Folder 1") ![](tests/data/1/20230617-142505_2268.png "Folder 1") | ![](tests/data/2/20240830-194630-%f_2479.png "Folder 2")    ![](tests/data/2/20240830-194640-%f_3092.png "Folder 2") | ![](tests/data/3/20240830-193955-%f_15830.png "Folder 3") ![](tests/data/3/20240830-194750-%f_6535.png "Folder 3") | ![](tests/data/4/20240830-193401-%f_3264.png "Folder 4") ![](tests/data/4/20240830-231236-%f_1729.png "Folder 4") |
+

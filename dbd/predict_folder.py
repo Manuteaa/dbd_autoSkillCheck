@@ -9,9 +9,10 @@ from dbd.networks.model import Model
 from dbd.datasets.transforms import get_validation_transforms
 from dbd.datasets.datasetLoader import DBD_dataset
 
+
 def infer_from_folder(folder, checkpoint):
     # Dataset
-    images = glob(os.path.join(folder, "*.*")) + glob(os.path.join(folder, "*", "*.*"))
+    images = glob(os.path.join(folder, "*.*"))
     images = np.array([[image, 0] for image in images])
 
     test_transforms = get_validation_transforms()
@@ -32,7 +33,7 @@ def infer_from_folder(folder, checkpoint):
 
 
 if __name__ == '__main__':
-    dataset_root = "dataset/2bis"
+    dataset_root = "dataset_prediction/4"
     checkpoint = "./lightning_logs/version_0/checkpoints"
 
     assert os.path.isdir(dataset_root)
@@ -41,6 +42,9 @@ if __name__ == '__main__':
     os.makedirs(os.path.join(dataset_root, "0"), exist_ok=True)
     os.makedirs(os.path.join(dataset_root, "1"), exist_ok=True)
     os.makedirs(os.path.join(dataset_root, "2"), exist_ok=True)
+    os.makedirs(os.path.join(dataset_root, "3"), exist_ok=True)
+    os.makedirs(os.path.join(dataset_root, "4"), exist_ok=True)
+    os.makedirs(os.path.join(dataset_root, "5"), exist_ok=True)
 
     for image, pred in tqdm.tqdm(preds, desc="Moving images"):
         shutil.move(image, os.path.join(dataset_root, str(int(pred)), os.path.basename(image)))
