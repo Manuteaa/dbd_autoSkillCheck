@@ -69,11 +69,18 @@ if __name__ == '__main__':
             ort_outs = ort_session.run(None, ort_inputs)
             pred = np.argmax(np.squeeze(ort_outs, 0))
 
+            # 0 : no skill check in the image (none)
+            # 1 : cursor in skill check area (great or good)
+            # 2 : cursor on the frontier between white area and fail (great or fail)
+            # 3 : cursor a bit before the white area (fail)
+            # 4 : cursor outside skill check area (fail)
+
             # Hit !!
-            if pred == 2:
+            anticipate = (pred == 2)
+            if pred == 1 or anticipate:
                 PressKey(SPACE)
                 ReleaseKey(SPACE)
-                sleep(1)
+                sleep(2)
 
                 if save_images:
                     img = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
