@@ -1,4 +1,4 @@
-dataset/
+dataset*/
 *.ckpt
 *.yaml
 .idea/
