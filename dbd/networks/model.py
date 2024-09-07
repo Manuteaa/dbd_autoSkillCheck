@@ -7,19 +7,20 @@ class Model(pl.LightningModule):
     def __init__(self, lr=1e-4):
         super().__init__()
         self.example_input_array = torch.zeros((32, 3, 224, 224), dtype=torch.float32)
+        self.nb_classes = 8
 
         self.encoder = self.build_encoder()
         self.decoder = self.build_decoder()
         self.lr = lr
 
         self.metrics_train = torchmetrics.MetricCollection([
-            torchmetrics.Precision(task='multiclass', num_classes=5, average=None),
-            torchmetrics.Recall(task='multiclass', num_classes=5, average=None)
+            torchmetrics.Precision(task='multiclass', num_classes=self.nb_classes, average=None),
+            torchmetrics.Recall(task='multiclass', num_classes=self.nb_classes, average=None)
         ])
 
         self.metrics_val = torchmetrics.MetricCollection([
-            torchmetrics.Precision(task='multiclass', num_classes=5, average=None),
-            torchmetrics.Recall(task='multiclass', num_classes=5, average=None)
+            torchmetrics.Precision(task='multiclass', num_classes=self.nb_classes, average=None),
+            torchmetrics.Recall(task='multiclass', num_classes=self.nb_classes, average=None)
         ])
 
     def build_encoder(self):
@@ -39,7 +40,7 @@ class Model(pl.LightningModule):
         return torch.nn.Sequential(
             torch.nn.Linear(1000, 1000),
             torch.nn.ReLU(),
-            torch.nn.Linear(1000, 5),
+            torch.nn.Linear(1000, self.nb_classes),
             # torch.nn.Softmax()  # Use logits instead
         )
 
@@ -55,13 +56,12 @@ class Model(pl.LightningModule):
 
     def on_train_epoch_end(self):
         results = self.metrics_train.compute()
-        pres_0, pres_1, pres_2, pres_3, pres_4 = torch.unbind(results['MulticlassPrecision'])
-        rec_0, rec_1, rec_2, rec_3, rec_4 = torch.unbind(results['MulticlassRecall'])
-        self.log_dict({
-            'pres/train_0': pres_0, 'pres/train_1': pres_1, 'pres/train_2': pres_2, 'pres/train_3': pres_3, 'pres/train_4': pres_4,
-            'rec/train_0': rec_0, 'rec/train_1': rec_1, 'rec/train_2': rec_2, 'rec/train_3': rec_3, 'rec/train_4': rec_4,
-        })
 
+        metrics_pres = {"pres/train_{}".format(i): score for i, score in enumerate(results['MulticlassPrecision'])}
+        metrics_rec = {"rec/train_{}".format(i): score for i, score in enumerate(results['MulticlassRecall'])}
+        metrics_pres.update(metrics_rec)
+
+        self.log_dict(metrics_pres)
         self.metrics_train.reset()
 
     def validation_step(self, batch, batch_idx):
@@ -76,13 +76,12 @@ class Model(pl.LightningModule):
 
     def on_validation_epoch_end(self):
         results = self.metrics_val.compute()
-        pres_0, pres_1, pres_2, pres_3, pres_4 = torch.unbind(results['MulticlassPrecision'])
-        rec_0, rec_1, rec_2, rec_3, rec_4 = torch.unbind(results['MulticlassRecall'])
-        self.log_dict({
-            'pres/val_0': pres_0, 'pres/val_1': pres_1, 'pres/val_2': pres_2, 'pres/val_3': pres_3, 'pres/val_4': pres_4,
-            'rec/val_0': rec_0, 'rec/val_1': rec_1, 'rec/val_2': rec_2, 'rec/val_3': rec_3, 'rec/val_4': rec_4,
-        })
 
+        metrics_pres = {"pres/val_{}".format(i): score for i, score in enumerate(results['MulticlassPrecision'])}
+        metrics_rec = {"rec/val_{}".format(i): score for i, score in enumerate(results['MulticlassRecall'])}
+        metrics_pres.update(metrics_rec)
+
+        self.log_dict(metrics_pres)
         self.metrics_val.reset()
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):

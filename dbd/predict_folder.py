@@ -33,18 +33,23 @@ def infer_from_folder(folder, checkpoint):
 
 
 if __name__ == '__main__':
-    dataset_root = "dataset_prediction/4"
-    checkpoint = "./lightning_logs/version_0/checkpoints"
+    dataset_source = "dataset/6"
+    checkpoint = "./lightning_logs/version_2/checkpoints"
 
-    assert os.path.isdir(dataset_root)
-    preds = infer_from_folder(dataset_root, checkpoint)
+    assert os.path.isdir(dataset_source)
+    preds = infer_from_folder(dataset_source, checkpoint)
 
-    os.makedirs(os.path.join(dataset_root, "0"), exist_ok=True)
-    os.makedirs(os.path.join(dataset_root, "1"), exist_ok=True)
-    os.makedirs(os.path.join(dataset_root, "2"), exist_ok=True)
-    os.makedirs(os.path.join(dataset_root, "3"), exist_ok=True)
-    os.makedirs(os.path.join(dataset_root, "4"), exist_ok=True)
-    os.makedirs(os.path.join(dataset_root, "5"), exist_ok=True)
+    dataset_dest = "dataset_prediction"
+    os.makedirs(os.path.join(dataset_dest, "0"), exist_ok=True)
+    os.makedirs(os.path.join(dataset_dest, "1"), exist_ok=True)
+    os.makedirs(os.path.join(dataset_dest, "2"), exist_ok=True)
+    os.makedirs(os.path.join(dataset_dest, "3"), exist_ok=True)
+    os.makedirs(os.path.join(dataset_dest, "4"), exist_ok=True)
+    os.makedirs(os.path.join(dataset_dest, "5"), exist_ok=True)
+    os.makedirs(os.path.join(dataset_dest, "6"), exist_ok=True)
 
-    for image, pred in tqdm.tqdm(preds, desc="Moving images"):
-        shutil.move(image, os.path.join(dataset_root, str(int(pred)), os.path.basename(image)))
+    for image, pred in tqdm.tqdm(preds, desc="Copying images"):
+        pred = int(pred)
+
+        if pred != 6:
+            shutil.copy(image, os.path.join(dataset_dest, str(pred), os.path.basename(image)))

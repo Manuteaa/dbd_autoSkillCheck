@@ -70,17 +70,23 @@ if __name__ == '__main__':
             pred = np.argmax(np.squeeze(ort_outs, 0))
 
             # 0 : no skill check in the image (none)
+
+            # When detecting single rotation skill check
             # 1 : cursor in skill check area (great or good)
             # 2 : cursor on the frontier between white area and fail (great or fail)
             # 3 : cursor a bit before the white area (fail)
             # 4 : cursor outside skill check area (fail)
 
+            # When detecting double rotation skill check
+            # 5 : cursor fully in great area of double rotation skill check (great)
+            # 6 : cursor on the frontier between white great and good area (great or good)
+            # 7 : cursor not overlapping pixel of great area (good or fail)
+
             # Hit !!
-            anticipate = (pred == 2)
-            if pred == 1 or anticipate:
+            if pred == 1 or pred == 2 or pred == 3 or pred == 5:
                 PressKey(SPACE)
                 ReleaseKey(SPACE)
-                sleep(2)
+                sleep(0.5)
 
                 if save_images:
                     img = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")

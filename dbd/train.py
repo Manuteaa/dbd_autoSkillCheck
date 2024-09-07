@@ -2,29 +2,36 @@ import glob
 import os
 
 import pytorch_lightning as pl
+import torch
 from pytorch_lightning.utilities.model_summary import ModelSummary
 
 from dbd.datasets.datasetLoader import get_dataloaders
 from dbd.networks.model import Model
 
+
+# torch.set_float32_matmul_precision('high')
+
 if __name__ == '__main__':
     ##########################################################
-    # checkpoint = "./lightning_logs/mobilenet_v3/checkpoints"
-    checkpoint = "./lightning_logs/version_0/checkpoints"
+    checkpoint = "./lightning_logs/version_1/checkpoints"
     dataset_root = "dataset/"
 
     ##########################################################
-    checkpoint = glob.glob(os.path.join(checkpoint, "*.ckpt"))[-1]
+    # checkpoint = glob.glob(os.path.join(checkpoint, "*.ckpt"))[-1]
 
     # Dataset
     dataloader_train, dataloader_val = get_dataloaders(dataset_root, num_workers=8)
 
     # Model
-    # model = Model(lr=1e-4)
-    model = Model.load_from_checkpoint(checkpoint, strict=True, lr=1e-4)
+    model = Model(lr=1e-4)
+    # model = Model.load_from_checkpoint(checkpoint, strict=True, lr=1e-4)
 
+    # Print model summary
     summary = ModelSummary(model, max_depth=2)
     print(summary)
+
+    # Compile the model
+    # model = torch.compile(model)
 
     valid = pl.Trainer(accelerator='gpu', devices=1, logger=False)
     valid.validate(model=model, dataloaders=dataloader_val)
