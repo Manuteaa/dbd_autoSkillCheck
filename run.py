@@ -58,12 +58,13 @@ if __name__ == '__main__':
         detected_images_idx = 0
         while True:
             screenshot = sct.grab(monitor)
-            img = screenshot_to_numpy(screenshot)
 
             # To check the monitor settings
             if debug_monitor:
                 image = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
                 image.save(os.path.join(img_folder, "monitored_image.png"))
+
+            img = screenshot_to_numpy(screenshot)
 
             ort_inputs = {input_name: img}
             ort_outs = ort_session.run(None, ort_inputs)
