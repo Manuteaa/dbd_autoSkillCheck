@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import mss
 import onnxruntime
@@ -20,6 +22,8 @@ def get_monitor_attributes():
                "left": width // 2 - object_size // 2,
                "width": object_size,
                "height": object_size}
+
+    print("Monitor crop settings :", monitor)
 
     return monitor
 
@@ -55,14 +59,25 @@ if __name__ == '__main__':
     with mss.mss() as sct:
         print("Monitoring the screen...")
 
+        nb_frames = 0
+        t0 = time.time()
         detected_images_idx = 0
         while True:
             screenshot = sct.grab(monitor)
+            nb_frames += 1
 
             # To check the monitor settings
             if debug_monitor:
                 image = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
                 image.save(os.path.join(img_folder, "monitored_image.png"))
+
+            # display mean fps
+            t_diff = time.time() - t0
+            if t_diff > 5.0:
+                fps = nb_frames / t_diff
+                print("Average fps: {:.1f}".format(fps))
+                t0 = time.time()
+                nb_frames = 0
 
             img = screenshot_to_numpy(screenshot)
 
