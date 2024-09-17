@@ -38,7 +38,7 @@ class DBD_dataset(Dataset):
         return image, target
 
     def _get_class_weights(self):
-        count_classes = torch.unique(self.targets, return_counts=True)[1]
+        count_classes = torch.bincount(self.targets)
         w_mapping = 1.0 / count_classes  # all classes have equal chance to be sampled
         return w_mapping
 
@@ -46,6 +46,7 @@ class DBD_dataset(Dataset):
         generator_torch = torch.Generator().manual_seed(seed)
         w = self._get_class_weights()
         w = w[self.targets]
+
         sampler = WeightedRandomSampler(w, num_samples=len(w), replacement=True, generator=generator_torch)
         return sampler
 
@@ -79,7 +80,7 @@ def _parse_dbd_datasetfolder(root_dataset_path):
             print("Skipping folder " + name)
             continue
 
-        images = glob(os.path.join(path, "*.*")) + glob(os.path.join(path, "*", "*.*"))
+        images = glob(os.path.join(path, "*.*"))
         print("Parsing folder {} : {} images found".format(name, len(images)))
 
         images_all += images
@@ -127,13 +128,16 @@ if __name__ == '__main__':
     import cv2
 
     dataset_root = "dataset/"
-    dataloader_train, dataloader_val = get_dataloaders(dataset_root, batch_size=1, num_workers=1)
+    # dataloader_train, dataloader_val = get_dataloaders(dataset_root, batch_size=1, num_workers=1)
+    dataloader_train, dataloader_val = get_dataloaders(dataset_root, batch_size=128, num_workers=1)
 
     std = torch.tensor(STD, dtype=torch.float32).reshape((3, 1, 1))
     mean = torch.tensor(MEAN, dtype=torch.float32).reshape((3, 1, 1))
 
     batch = next(iter(dataloader_train))
     x, y = batch
+
+    print(torch.bincount(y))
 
     for i, batch in enumerate(dataloader_train):
         x, y = batch
@@ -145,5 +149,5 @@ if __name__ == '__main__':
         x = x.cpu().numpy().astype(np.uint8)
 
         img = cv2.cvtColor(x, cv2.COLOR_RGB2BGR)
-        cv2.imshow("image", img)
+        cv2.imshow(str(y.cpu().numpy()[0]), img)
         cv2.waitKey()
