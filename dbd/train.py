@@ -3,6 +3,7 @@ import os
 
 import pytorch_lightning as pl
 import torch
+from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.utilities.model_summary import ModelSummary
 
 from dbd.datasets.datasetLoader import get_dataloaders
@@ -37,7 +38,8 @@ if __name__ == '__main__':
     valid.validate(model=model, dataloaders=dataloader_val)
 
     # Training
-    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=100, num_sanity_val_steps=0, precision="16-mixed")
+    checkpoint_callback = ModelCheckpoint(save_top_k=2, monitor="loss/val")
+    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=100, num_sanity_val_steps=0, precision="16-mixed", callbacks=[checkpoint_callback])
     trainer.fit(model=model, train_dataloaders=dataloader_train, val_dataloaders=dataloader_val)
 
     # tensorboard --logdir=lightning_logs/
