@@ -128,8 +128,8 @@ if __name__ == '__main__':
     import cv2
 
     dataset_root = "dataset/"
-    # dataloader_train, dataloader_val = get_dataloaders(dataset_root, batch_size=1, num_workers=1)
-    dataloader_train, dataloader_val = get_dataloaders(dataset_root, batch_size=128, num_workers=1)
+    dataloader_train, dataloader_val = get_dataloaders(dataset_root, batch_size=1, num_workers=1)
+    # dataloader_train, dataloader_val = get_dataloaders(dataset_root, batch_size=32, num_workers=1)
 
     std = torch.tensor(STD, dtype=torch.float32).reshape((3, 1, 1))
     mean = torch.tensor(MEAN, dtype=torch.float32).reshape((3, 1, 1))
@@ -137,7 +137,9 @@ if __name__ == '__main__':
     batch = next(iter(dataloader_train))
     x, y = batch
 
-    print(torch.bincount(y))
+    # for batch in dataloader_train:
+    #     x, y = batch
+    #     print(torch.bincount(y))
 
     for i, batch in enumerate(dataloader_train):
         x, y = batch
@@ -149,5 +151,7 @@ if __name__ == '__main__':
         x = x.cpu().numpy().astype(np.uint8)
 
         img = cv2.cvtColor(x, cv2.COLOR_RGB2BGR)
-        cv2.imshow(str(y.cpu().numpy()[0]), img)
+        category = str(y.cpu().numpy()[0])
+        cv2.imshow(category, img)
+        cv2.moveWindow(category, 200, 200)
         cv2.waitKey()
