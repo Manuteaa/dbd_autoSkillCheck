@@ -35,15 +35,15 @@ def predict(onnx_ai_model, image):
 
     image_np = center_crop(image)
     image_np = ai_model.pil_to_numpy(image_np)  # apply transforms, even if input is not a pil image
-    pred, probs = ai_model.predict(image_np)
+    pred, desc, probs, should_hit = ai_model.predict(image_np)
 
-    probs = {ai_model.pred_dict[i]["desc"]: probs[i] for i in range(len(probs))}
     return probs
 
 
 if __name__ == "__main__":
     demo = gr.Interface(fn=predict,
-                        inputs=[gr.Dropdown(choices=["model.onnx"], value="model.onnx"), gr.Image()],
+                        inputs=[gr.Dropdown(label="ONNX model filepath", choices=["model.onnx"], value="model.onnx", info="Filepath of the ONNX model (trained AI model)"),
+                                gr.Image()],
                         outputs=gr.Label(label="Skill check recognition")
                         )
     demo.launch()

@@ -55,10 +55,10 @@ class MonitorApp:
         self.log_frame.grid(row=3, column=0, columnspan=3, padx=10, pady=10)
 
         self.log_message("Press START to run the Auto skill check script")
-        self.log_message("Left image: cropped monitored frame (at 1fps)")
+        self.log_message("Ensure game fps\u226560 and AI fps\u226560")
+        self.log_message("Left image: monitored frame (at 1fps)")
         self.log_message("Right image: last hit skill check")
         self.log_message("")
-
         self.log_message("Logs:")
 
     def toggle_run(self):
@@ -92,17 +92,19 @@ class MonitorApp:
             image_np = ai_model.pil_to_numpy(image_pil)
             nb_frames += 1
 
-            pred = ai_model.predict(image_np)
-            hit = ai_model.process(pred)
+            pred, probs = ai_model.predict(image_np)
+            hit, desc = ai_model.process(pred)
 
-            # Uncomment here to save all images with a detected skill check
-            # if str(pred) != "0" and self.save_hit:
-            #     path = os.path.join(self.img_folder, str(pred), "{}.png".format(nb_hits))
-            #     image_pil.save(path)
-            #     nb_hits += 1
+            # Debug only
+            if pred != 0:
+                path = os.path.join(self.img_folder, str(pred), "{}.png".format(nb_hits))
+                self.log_message(f"{nb_hits}.png: {probs}")
+                image_pil.save(path)
+                nb_hits += 1
 
             if hit:
-                self.log_message(f"Great skill check detected and hit !")
+                # self.log_message(f"hit {desc} with confidence {100*prob:.1f}%")
+                self.log_message(f"hit {desc}")
                 self.display_image(image_pil, 1)
 
                 if self.save_hit:
@@ -121,6 +123,7 @@ class MonitorApp:
                 fps = nb_frames / t_diff
                 self.update_fps_label(fps)
                 self.display_image(image_pil, 0)
+                print(fps)
 
                 t0 = time.time()
                 nb_frames = 0
