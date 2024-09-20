@@ -4,17 +4,30 @@ import onnxruntime
 import pyautogui
 from PIL import Image
 
-from dbd.utils.directkeys import PressKey, ReleaseKey, SPACE
-
 
 class AI_model:
     MEAN = [0.485, 0.456, 0.406]
     STD = [0.229, 0.224, 0.225]
 
-    def __init__(self):
+    pred_dict = {0: {"desc": "None", "hit": False},
+                 1: {"desc": "repair-heal (great)", "hit": True},
+                 2: {"desc": "repair-heal (ante-frontier)", "hit": True},
+                 3: {"desc": "repair-heal (out)", "hit": False},
+                 4: {"desc": "full white (great)", "hit": True},
+                 5: {"desc": "full white (out)", "hit": False},
+                 6: {"desc": "full black (great)", "hit": True},
+                 7: {"desc": "full black (out)", "hit": False},
+                 8: {"desc": "wiggle (great)", "hit": True},
+                 9: {"desc": "wiggle (frontier)", "hit": False},
+                 10: {"desc": "wiggle (out)", "hit": False}
+                 }
+
+    def __init__(self, onnx_filepath=None):
+        if onnx_filepath is None:
+            onnx_filepath = "model.onnx"
+
         # Trained model
-        filepath = "model.onnx"
-        self.ort_session = onnxruntime.InferenceSession(filepath)
+        self.ort_session = onnxruntime.InferenceSession(onnx_filepath)
         self.input_name = self.ort_session.get_inputs()[0].name
 
         self.mss = mss.mss()
@@ -50,38 +63,21 @@ class AI_model:
         img = np.float32(img)
         return img
 
+    def softmax(self, x):
+        exp_x = np.exp(x - np.max(x))
+        return exp_x / np.sum(exp_x)
+
     def predict(self, image):
         ort_inputs = {self.input_name: image}
         ort_outs = self.ort_session.run(None, ort_inputs)
         logits = np.squeeze(ort_outs)
-        pred = np.argmax(logits)
-        return pred
 
-    def process(self, pred):
-        # 0 : no skill check
+        pred = int(np.argmax(logits))
+        probs = self.softmax(logits)
 
-        # Simple (HEAL - REPAIR)
-        # 1 : Great or good
-        # 2 : frontier or slightly before great
-        # 3 : fail
+        probs = np.round(probs, decimals=3).tolist()
+        probs_dict = {self.pred_dict[i]["desc"]: probs[i] for i in range(len(probs))}
+        should_hit = self.pred_dict[pred]["hit"]
+        desc = self.pred_dict[pred]["desc"]
 
-        # White (STRUGGLE - OVERCHARGE)
-        # 4 : great = good
-        # 5 : fail
-
-        # Black (MERCILESS)
-        # 6 : great = good
-        # 7 : fail
-
-        # Double (WIGGLE)
-        # 8 great
-        # 9 : frontier
-        # 10 : good or fail
-
-        # Hit !!
-        if pred == 1 or pred == 2 or pred == 3 or pred == 5 or pred == 7 or pred == 9:
-            PressKey(SPACE)
-            ReleaseKey(SPACE)
-            return True
-
-        return False
+        return pred, desc, probs_dict, should_hit
