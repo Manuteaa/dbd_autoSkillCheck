@@ -1,26 +1,26 @@
 import os.path
 
 import gradio as gr
+from PIL import Image
 
 from dbd.AI_model import AI_model
 
 
-def center_crop(image, crop_size=(224, 224)):
-    h, w = image.shape[:2]
+def center_crop(image: Image.Image, crop_size=(224, 224)):
     crop_h, crop_w = crop_size
+    width, height = image.size
 
-    if h < crop_h or w < crop_w:
+    if height < crop_h or width < crop_w:
         gr.Error("Image shape is invalid")
 
-    # Calculate the starting and ending indices for cropping
-    start_y = (h - crop_h) // 2
-    start_x = (w - crop_w) // 2
+    left = (width - crop_w) / 2
+    top = (height - crop_h) / 2
+    right = (width + crop_w) / 2
+    bottom = (height + crop_h) / 2
 
-    # Ensure the crop indices are valid
-    start_y = max(0, start_y)
-    start_x = max(0, start_x)
-
-    return image[start_y:start_y + crop_h, start_x:start_x + crop_w, :3]
+    # Crop the center of the image
+    image = image.crop((left, top, right, bottom))
+    return image
 
 
 def predict(onnx_ai_model, image):
@@ -33,9 +33,9 @@ def predict(onnx_ai_model, image):
     # AI model
     ai_model = AI_model(onnx_ai_model)
 
-    image_np = center_crop(image)
-    image_np = ai_model.pil_to_numpy(image_np)  # apply transforms, even if input is not a pil image
-    pred, desc, probs, should_hit = ai_model.predict(image_np)
+    image = center_crop(image)
+    image = ai_model.pil_to_numpy(image)
+    pred, desc, probs, should_hit = ai_model.predict(image)
 
     return probs
 
@@ -43,7 +43,7 @@ def predict(onnx_ai_model, image):
 if __name__ == "__main__":
     demo = gr.Interface(fn=predict,
                         inputs=[gr.Dropdown(label="ONNX model filepath", choices=["model.onnx"], value="model.onnx", info="Filepath of the ONNX model (trained AI model)"),
-                                gr.Image()],
+                                gr.Image(type="pil")],
                         outputs=gr.Label(label="Skill check recognition")
                         )
     demo.launch()

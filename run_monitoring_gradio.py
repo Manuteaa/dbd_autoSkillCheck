@@ -46,7 +46,7 @@ def monitor(onnx_ai_model, debug_option):
             PressKey(SPACE)
             ReleaseKey(SPACE)
 
-            yield None, image_pil, probs
+            yield gr.update(), image_pil, probs
 
             if debug_option == debug_options[2]:
                 path = os.path.join(debug_folder, str(pred), "hit_{}.png".format(nb_hits))
@@ -64,9 +64,9 @@ def monitor(onnx_ai_model, debug_option):
             fps = round(nb_frames / t_diff, 1)
 
             if debug_option == debug_options[1]:
-                yield fps, image_pil, None
+                yield fps, image_pil, gr.update()
             else:
-                yield fps, None, None
+                yield fps, gr.update(), gr.update()
 
             t0 = time.time()
             nb_frames = 0
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     fps_info = "Number of frames per second the AI model analyses the monitored frame. Must be equal (or greater than) 60 to hit great skill checks properly. Check The GitHub FAQ for more details"
 
     demo = gr.Interface(title="DBD Auto skill check",
-                        description="Please refer to xGithubx",
+                        description="Please refer to https://github.com/Manuteaa/dbd_autoSkillCheck",
                         fn=monitor,
                         submit_btn="RUN",
                         clear_btn=None,
