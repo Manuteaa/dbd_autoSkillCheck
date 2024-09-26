@@ -3,86 +3,75 @@ import torchmetrics
 import torch
 import torchvision.models as models
 
+
 class Model(pl.LightningModule):
     def __init__(self, lr=1e-4):
         super().__init__()
         self.example_input_array = torch.zeros((32, 3, 224, 224), dtype=torch.float32)
-        self.nb_classes = 8
+        self.nb_classes = 11
 
-        self.encoder = self.build_encoder()
-        self.decoder = self.build_decoder()
+        self.model = self.build_model()
         self.lr = lr
 
-        self.metrics_train = torchmetrics.MetricCollection([
-            torchmetrics.Precision(task='multiclass', num_classes=self.nb_classes, average=None),
-            torchmetrics.Recall(task='multiclass', num_classes=self.nb_classes, average=None)
-        ])
+        self.acc_score_train = torchmetrics.Accuracy(task='multiclass', num_classes=self.nb_classes, average="none", validate_args=False)
+        self.acc_score_val = torchmetrics.Accuracy(task='multiclass', num_classes=self.nb_classes, average="none", validate_args=False)
 
-        self.metrics_val = torchmetrics.MetricCollection([
-            torchmetrics.Precision(task='multiclass', num_classes=self.nb_classes, average=None),
-            torchmetrics.Recall(task='multiclass', num_classes=self.nb_classes, average=None)
-        ])
+        # self.metrics_val = torchmetrics.MetricCollection([
+        #     torchmetrics.F1Score(task='multiclass', num_classes=self.nb_classes, average="none", validate_args=False),
+        #     torchmetrics.Accuracy(task='multiclass', num_classes=self.nb_classes, average="none", validate_args=False)
+        # ])
 
-    def build_encoder(self):
-        weights = models.MobileNet_V3_Large_Weights.DEFAULT
-        encoder = models.mobilenet_v3_large(weights=weights)
+    def build_model(self):
+        # weights = models.MobileNet_V3_Large_Weights.DEFAULT
+        # model = models.mobilenet_v3_large(weights=weights)
+        # model.classifier[-1] = torch.nn.Linear(1280, self.nb_classes)
 
-        # weights = models.MNASNet0_5_Weights.DEFAULT
-        # encoder = models.mnasnet0_5(weights=weights)
+        weights = models.MobileNet_V3_Small_Weights.DEFAULT
+        model = models.mobilenet_v3_small(weights=weights)
+        model.classifier[-1] = torch.nn.Linear(1024, self.nb_classes)
 
-        # Freeze encoder
-        # for param in encoder.parameters():
-        #     param.requires_grad = False
+        # weights = models.ConvNeXt_Tiny_Weights.DEFAULT
+        # model = models.convnext_tiny(weights=weights, num_classes=self.nb_classes)
 
-        return encoder
-
-    def build_decoder(self):
-        return torch.nn.Sequential(
-            torch.nn.Linear(1000, 1000),
-            torch.nn.ReLU(),
-            torch.nn.Linear(1000, self.nb_classes),
-            # torch.nn.Softmax()  # Use logits instead
-        )
+        return model
 
     def training_step(self, batch, batch_idx):
         x, y = batch
         pred = self(x)
 
         loss = torch.nn.functional.cross_entropy(pred, y)
-
         self.log("loss/train", loss)
-        self.metrics_train.update(pred, y)
+
+        # Accumulate metrics
+        self.acc_score_train.update(pred, y)
+
         return loss
 
     def on_train_epoch_end(self):
-        results = self.metrics_train.compute()
+        acc_score_train = self.acc_score_train.compute()
+        self.log_dict({"Acc/train_{}".format(i): score for i, score in enumerate(acc_score_train)})
+        self.log_dict({"Acc/train_mean": torch.mean(acc_score_train)})
 
-        metrics_pres = {"pres/train_{}".format(i): score for i, score in enumerate(results['MulticlassPrecision'])}
-        metrics_rec = {"rec/train_{}".format(i): score for i, score in enumerate(results['MulticlassRecall'])}
-        metrics_pres.update(metrics_rec)
-
-        self.log_dict(metrics_pres)
-        self.metrics_train.reset()
+        self.acc_score_train.reset()
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
         pred = self(x)
 
         loss = torch.nn.functional.cross_entropy(pred, y)
-
         self.log("loss/val", loss)
-        self.metrics_val.update(pred, y)
+
+        # Accumulate metrics
+        self.acc_score_val.update(pred, y)
+
         return loss
 
     def on_validation_epoch_end(self):
-        results = self.metrics_val.compute()
+        acc_score_val = self.acc_score_val.compute()
+        self.log_dict({"Acc/val_{}".format(i): score for i, score in enumerate(acc_score_val)})
+        self.log_dict({"Acc/val_mean": torch.mean(acc_score_val)})
 
-        metrics_pres = {"pres/val_{}".format(i): score for i, score in enumerate(results['MulticlassPrecision'])}
-        metrics_rec = {"rec/val_{}".format(i): score for i, score in enumerate(results['MulticlassRecall'])}
-        metrics_pres.update(metrics_rec)
-
-        self.log_dict(metrics_pres)
-        self.metrics_val.reset()
+        self.acc_score_val.reset()
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         x, y = batch
@@ -91,10 +80,12 @@ class Model(pl.LightningModule):
         return pred
 
     def forward(self, x):
-        z = self.encoder(x)
-        pred = self.decoder(z)
+        pred = self.model(x)
         return pred
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=1e-4)
+        # optimizer = torch.optim.RMSprop(self.parameters(), lr=self.lr, momentum=0.9, weight_decay=1e-4)
+        # scheduler = ExponentialLR(optimizer, gamma=0.9)
+
         return optimizer
