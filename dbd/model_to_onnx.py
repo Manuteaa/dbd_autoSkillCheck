@@ -9,12 +9,9 @@ from dbd.utils.frame_grabber import get_monitor_attributes_test
 
 
 if __name__ == '__main__':
-    # checkpoint = "./lightning_logs/mnasnet0_5/checkpoints"
-    checkpoint = "./lightning_logs/version_1/checkpoints"
+    checkpoint = "./lightning_logs/version_11/checkpoints"
+    checkpoint = glob.glob(os.path.join(checkpoint, "*.ckpt"))[0]
 
-    checkpoint = glob.glob(os.path.join(checkpoint, "*.ckpt"))[-1]
-
-    monitor = get_monitor_attributes_test()
     model = Model.load_from_checkpoint(checkpoint, strict=True)
 
     # TO ONNX
