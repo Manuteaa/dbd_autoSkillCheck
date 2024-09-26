@@ -3,12 +3,11 @@ import torch
 import numpy as np
 from glob import glob
 
-import torchvision.io
 import math
 
 from dbd.datasets.transforms import get_training_transforms, get_validation_transforms
 from torch.utils.data import DataLoader, WeightedRandomSampler, Dataset
-from torchvision.io import read_image
+from torchvision.io import read_image, ImageReadMode
 
 
 class DBD_dataset(Dataset):
@@ -52,7 +51,7 @@ class DBD_dataset(Dataset):
 
     def get_image_from_path(self, idx):
         image = self.images_path[idx]
-        image = read_image(image, mode=torchvision.io.ImageReadMode.RGB)
+        image = read_image(image, mode=ImageReadMode.RGB)
         return image
 
     def get_dataloader(self, batch_size=32, num_workers=0, use_balanced_sampler=False):
