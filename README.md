@@ -48,13 +48,18 @@ Your main screen is now monitored meaning that frames are regularly sampled (wit
 You can play the game on your main monitor.
 When a great skill check is detected, the SPACE key is automatically pressed, then it waits for 0.5s to avoid triggering the same skill check multiple times in a row.
 
+On the right of the web UI, we display :
+- The AI model FPS : the number of frames per seconds the AI model processes
+- The last hit skill check frame : last frame (center-cropped image with size 224x224) the AI model triggered the SPACE bar
+- Skill check recognition : set of probabilities for the frame displayed before
+
 | RUN example with a full white skill check (to hit) | RUN example with an ante-great repair skill check (to hit) |
 |----------------------------------------------------|------------------------------------------------------------|
 | ![](images/run_2.png "Example run 1")              | ![](images/run_3.png "Example run 2")                      |
 
 
 
-**The AI model FPS must run at 60fps (or more) in order to hit correctly the great skill checks.** If you have low values, try this :
+**Both the game AND the AI model FPS must run at 60fps (or more) in order to hit correctly the great skill checks.** If you have low FPS values for the AI model, try this :
 - Disable the energy saver settings in your computer settings
 - Run the script in administrator
 
@@ -111,6 +116,8 @@ We had to manually modify the last layer of the decoder. Initially designed to c
 ### Training
 
 We use a standard cross entropy loss to train the model and monitor the training process using per-category accuracy score.
+
+I trained the model using my own computer, and using the AWS _g6.4xlarge_ EC2 instance (around x1.5 faster to train than on my computer).
 
 
 ### Inference
