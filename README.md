@@ -50,7 +50,7 @@ When a great skill check is detected, the SPACE key is automatically pressed, th
 
 On the right of the web UI, we display :
 - The AI model FPS : the number of frames per seconds the AI model processes
-- The last hit skill check frame : last frame (center-cropped image with size 224x224) the AI model triggered the SPACE bar
+- The last hit skill check frame : last frame (center-cropped image with size 224x224) the AI model triggered the SPACE bar. **This may not be the actual hit frame (as registered by the game) because of game latency (such as ping). The AI model anticipates the latency, and hits the space bar a little bit before the cursor reaches the great area, that's why the displayed frame will always be few frames before actual game hit frame**
 - Skill check recognition : set of probabilities for the frame displayed before
 
 | RUN example with a full white skill check (to hit) | RUN example with an ante-great repair skill check (to hit) |
@@ -97,7 +97,7 @@ The data was manually divided into 11 separate folders based on :
 - The position of the cursor relative to the area to hit : outside, a bit before the hit area and inside the hit area.
 
 **We experimentally made the conclusion that following the type of the skill check, we must hit the space bar a bit before the cursor reaches the great area, in order to anticipate the game input processing latency.
-That's why we have this dataset structure and granularity.**
+That's why we have this dataset structure and granularity (with ante-frontier and frontier areas recognition).**
 
 To alleviate the laborious collection task, we employed data augmentation techniques such as random rotations, random crop-resize, and random brightness/contrast/saturation adjustments.
 
