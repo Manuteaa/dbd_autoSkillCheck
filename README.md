@@ -72,9 +72,9 @@ On the right of the web UI, we display :
 - The last hit skill check frame : last frame (center-cropped image with size 224x224) the AI model triggered the SPACE bar. **This may not be the actual hit frame (as registered by the game) because of game latency (such as ping). The AI model anticipates the latency, and hits the space bar a little bit before the cursor reaches the great area, that's why the displayed frame will always be few frames before actual game hit frame**
 - Skill check recognition : set of probabilities for the frame displayed before
 
-| RUN example with a full white skill check (to hit) | RUN example with an ante-great repair skill check (to hit) |
-|----------------------------------------------------|------------------------------------------------------------|
-| ![](images/run_1.png "Example run 1")              | ![](images/run_2.png "Example run 2")                      |
+| Auto skill check example 1            | Auto skill check example 2            |
+|---------------------------------------|---------------------------------------|
+| ![](images/run_1.png "Example run 1") | ![](images/run_2.png "Example run 2") |
 
 
 
@@ -181,17 +181,28 @@ How to run the AI model with your GPU ?
 - Install last version of MSVC
 - Select "GPU" in the Auto skill check webUI, click "RUN" and check if you have a warning message
 
-If the script misses the great skill checks, be sure :
+Why does the script do nothing ?
+- Check if the AI model monitors correctly your game: set the debug option of the webui to "display the monitored frame". Play the game and check if it displays correctly the skill check
+- Check if you have no error in the python console logs
+
+Why do I hit good skill checks instead of great ? Be sure :
 - Your game FPS >= 60
 - The AI model FPS >= 60
 - Your ping is not too high (I have 40 ping and I hit 100% great skill checks)
-- Your game settings (such as resolution): your displayed images "last hit skill check frame" should be similar with the ones in my examples
+- Your game settings are not unusual (such as special resolution or game filters): your displayed images "last hit skill check frame" should be similar with the ones in my examples
 - You do not use a potato instead of a computer
 
-If you have low FPS values for the AI model, try this :
+I have lower values than 60 FPS for the AI model, what can I do ?:
 - Switch device to gpu
 - Disable the energy saver settings in your computer settings
-- Run the script in administrator
+- Run the script in administrator mode
+
+Why does the AI model hit the skill check too early and fails ?
+- You may experience a very low ping (this is good) combined with a better computer than mine. Edit the file `dbd/AI_model.py` and disable the ante-frontier hits (set hit variable to False, for example `2: {"desc": "repair-heal (ante-frontier)", "hit": False}`)
+
+What about the anti-cheat system ?
+- The script monitors a partial crop of your main screen, and can press then release the space bar using [Windows MSDN](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes?redirectedfrom=MSDN) once each 0.5s maximum. I don't know if this can be detected as a cheat
+- I played the game quite a lot with the script on, and never had any problem. However, I can't and will not generalize, so I can't really answer to this question...
 
 ## Acknowledgments
 
