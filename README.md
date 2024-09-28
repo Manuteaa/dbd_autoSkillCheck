@@ -3,6 +3,12 @@
 The Dead by Daylight Auto Skill Check is a tool developed using deep learning techniques (PyTorch) to automatically detect and successfully hit skill checks in the popular game Dead by Daylight. 
 This tool is designed to improve gameplay performance and enhance the player's skill in the game. 
 
+
+| In-game demo (x2 speed)         |
+|---------------------------------|
+| ![demo](images/demo.gif "demo") |
+
+
 <!-- TOC -->
 * [DBD Auto Skill Check](#dbd-auto-skill-check)
   * [Features](#features)
@@ -190,7 +196,8 @@ Why does the script do nothing ?
 Why do I hit good skill checks instead of great ? Be sure :
 - Your game FPS >= 60
 - The AI model FPS >= 60
-- Your ping is not too high (<= 50 should be fine)
+- Your ping is not too high (<= 60 should be fine)
+- Disable Vsync and FSR in the game settings
 
 I have lower values than 60 FPS for the AI model, what can I do ?:
 - Switch device to gpu
@@ -200,8 +207,14 @@ I have lower values than 60 FPS for the AI model, what can I do ?:
 Why does the AI model hit the skill check too early and fails ?
 - You may experience a very low ping (this is good) combined with a better computer than mine. Edit the file `dbd/AI_model.py` and disable the ante-frontier hits (set hit variable to False, for example `2: {"desc": "repair-heal (ante-frontier)", "hit": False}`)
 
+Does the script work well with the perk hyperfocus ?
+- Yes
+
+Does the script work well for skill checks in random locations (doctor skill checks) ?
+- Unfortunately, the script only monitors a small part of the center of your screen. It can not see the skill checks outside this area. Even if you make it work by editing the code (like capturing the whole screen and resize the frames to 224x224) the AI model was not trained to handle these special skill checks, so it will not work very well...
+
 What about the anti-cheat system ?
-- The script monitors a partial crop of your main screen, and can press then release the space bar using [Windows MSDN](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes?redirectedfrom=MSDN) once each 0.5s maximum. I don't know if this can be detected as a cheat
+- The script monitors a small crop of your main screen, and can press then release the space bar using [Windows MSDN](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes?redirectedfrom=MSDN) once each 0.5s maximum. I don't know if this can be detected as a cheat
 - I played the game quite a lot with the script on, and never had any problem. However, I can't and will not generalize, so I can't really answer to this question...
 
 ## Acknowledgments
@@ -209,6 +222,6 @@ What about the anti-cheat system ?
 A big thanks to [hemlock12](https://github.com/hemlock12) for the data collection help !
 
 The project was made and is maintained by me ([Manuteaa](https://github.com/Manuteaa)). If you like it, and want to tell it you can simply star this project !
-You want to say a thank-you ? Discuss new project(s) collaboration ? Contact me on discord: manuteaa
+You want to say a thank-you ? Discuss new project(s) collaboration (for example for the killer side) ? Contact me on discord: manuteaa
 
 An issue ? Questions ? Suggestions ? Just open a new issue

@@ -63,7 +63,6 @@ class AI_model:
 
     def pil_to_numpy(self, image_pil):
         img = np.array(image_pil, dtype=np.float32)
-        # img = np.flip(img[:, :, :3], 2)
         img = img / 255.0
         img = (img - self.MEAN) / self.STD
 
