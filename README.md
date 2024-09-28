@@ -67,16 +67,16 @@ Your main screen is now monitored meaning that frames are regularly sampled (wit
 You can play the game on your main monitor.
 When a great skill check is detected, the SPACE key is automatically pressed, then it waits for 0.5s to avoid triggering the same skill check multiple times in a row.
 
-On the right of the web UI, we display :
-- The AI model FPS : the number of frames per second the AI model processes
-- The last hit skill check frame : last frame (center-cropped image with size 224x224) the AI model triggered the SPACE bar. **This may not be the actual hit frame (as registered by the game) because of game latency (such as ping). The AI model anticipates the latency, and hits the space bar a little bit before the cursor reaches the great area, that's why the displayed frame will always be few frames before actual game hit frame**
-- Skill check recognition : set of probabilities for the frame displayed before
 
 | Auto skill check example 1            | Auto skill check example 2            |
 |---------------------------------------|---------------------------------------|
 | ![](images/run_1.png "Example run 1") | ![](images/run_2.png "Example run 2") |
 
 
+On the right of the web UI, we display :
+- The AI model FPS : the number of frames per second the AI model processes
+- The last hit skill check frame : last frame (center-cropped image with size 224x224) the AI model triggered the SPACE bar. **This may not be the actual hit frame (as registered by the game) because of game latency (such as ping). The AI model anticipates the latency, and hits the space bar a little bit before the cursor reaches the great area, that's why the displayed frame will always be few frames before actual game hit frame**
+- Skill check recognition : set of probabilities for the frame displayed before
 
 **Both the game AND the AI model FPS must run at 60fps (or more) in order to hit correctly the great skill checks.** 
 I had the problem of low FPS with Windows : when the script was on the background (when I played), the FPS dropped significantly. Running the script in admin solved the problem (see the [FAQ](#faq)).
