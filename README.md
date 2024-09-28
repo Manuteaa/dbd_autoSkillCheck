@@ -3,20 +3,38 @@
 The Dead by Daylight Auto Skill Check is a tool developed using deep learning techniques (PyTorch) to automatically detect and successfully hit skill checks in the popular game Dead by Daylight. 
 This tool is designed to improve gameplay performance and enhance the player's skill in the game. 
 
+<!-- TOC -->
+* [DBD Auto Skill Check](#dbd-auto-skill-check)
+  * [Features](#features)
+  * [Execution Instructions](#execution-instructions)
+    * [Single prediction Web UI](#single-prediction-web-ui)
+    * [Auto skill check Web UI](#auto-skill-check-web-ui)
+  * [What is a skill check](#what-is-a-skill-check)
+  * [Project details](#project-details)
+    * [Dataset](#dataset)
+    * [Architecture](#architecture)
+    * [Training](#training)
+    * [Inference](#inference)
+    * [Results](#results)
+  * [FAQ](#faq)
+  * [Acknowledgments](#acknowledgments)
+<!-- TOC -->
+
 ## Features
 - Real-time detection of skill checks (60fps)
-- High accuracy in recognizing **all types of skill checks (with a 98.7% precision, see details of results below)**
+- High accuracy in recognizing **all types of skill checks (with a 98.7% precision, see details of [Results](#results))**
 - Automatic triggering of great skill checks through auto-pressing the space bar
-- **[NEW]** Two different webUI to run the AI model
+- Two different webUI to run the AI model
 
 
 ## Execution Instructions
-I have only tested the model on my own computer running Windows 11 with CUDA version 12.3.
+I have only tested the model on my own computer running Windows 11 with CUDA version 12.3. I provide two different scripts you can run, here the instructions.
 
 Create your own python env (I have python 3.11) and install the necessary libraries using the command :
-`pip install numpy mss onnxruntime pyautogui IPython pillow gradio`
 
-Then clone the repo. I provide two different scripts.
+`pip install numpy mss onnxruntime-gpu pyautogui IPython pillow gradio`
+
+Then git clone the repo.
 
 ### Single prediction Web UI
 
@@ -33,38 +51,35 @@ Run this script to test the AI model with images of the game.
 |------------------------------------------------|------------------------------------------------|
 | ![](images/single_pred_1.png "Example repair") | ![](images/single_pred_2.png "Example wiggle") |
 
-### Monitoring Web UI
+### Auto skill check Web UI
 
 Run this script and play the game ! It will hit the space bar for you.
 
 `python run_monitoring_gradio.py`
 
 1) Select the trained AI model (default to `model.onnx` available in this repo)
-2) Choose debug options. I recommend setting this option to None. If you want to check which screen the script is monitoring, you can select the first option. If the AI struggles recognizing the skill checks, select the second option to save the results, then you can upload the images in a new GitHub issue.
-3) Click 'RUN'
-4) You can STOP and RUN the script from the Web UI at will, for example when waiting in the game lobby.
+2) Select the device to use. Select "CPU", except if you need to improve the AI model FPS [FAQ](#faq)
+3) Choose debug options. I recommend setting this option to None. If you want to check which screen the script is monitoring, you can select the first option. If the AI struggles recognizing the skill checks, select the second option to save the results, then you can upload the images in a new GitHub issue
+4) Click 'RUN'
+5) You can STOP and RUN the script from the Web UI at will, for example when waiting in the game lobby
 
 Your main screen is now monitored meaning that frames are regularly sampled (with a center-crop) and analysed with the trained AI model.
 You can play the game on your main monitor.
 When a great skill check is detected, the SPACE key is automatically pressed, then it waits for 0.5s to avoid triggering the same skill check multiple times in a row.
 
 On the right of the web UI, we display :
-- The AI model FPS : the number of frames per seconds the AI model processes
+- The AI model FPS : the number of frames per second the AI model processes
 - The last hit skill check frame : last frame (center-cropped image with size 224x224) the AI model triggered the SPACE bar. **This may not be the actual hit frame (as registered by the game) because of game latency (such as ping). The AI model anticipates the latency, and hits the space bar a little bit before the cursor reaches the great area, that's why the displayed frame will always be few frames before actual game hit frame**
 - Skill check recognition : set of probabilities for the frame displayed before
 
 | RUN example with a full white skill check (to hit) | RUN example with an ante-great repair skill check (to hit) |
 |----------------------------------------------------|------------------------------------------------------------|
-| ![](images/run_2.png "Example run 1")              | ![](images/run_3.png "Example run 2")                      |
+| ![](images/run_1.png "Example run 1")              | ![](images/run_2.png "Example run 2")                      |
 
 
 
-**Both the game AND the AI model FPS must run at 60fps (or more) in order to hit correctly the great skill checks.** If you have low FPS values for the AI model, try this :
-- Disable the energy saver settings in your computer settings
-- Run the script in administrator
-
-I had this problem of low FPS with Windows : when the script was on the background (when I played), the FPS dropped significantly. Running the script in admin solved the problem.
-
+**Both the game AND the AI model FPS must run at 60fps (or more) in order to hit correctly the great skill checks.** 
+I had the problem of low FPS with Windows : when the script was on the background (when I played), the FPS dropped significantly. Running the script in admin solved the problem (see the [FAQ](#faq)).
 
 
 ## What is a skill check
@@ -155,6 +170,28 @@ When combined with our screen monitoring script, we achieved a consistent 60fps 
 In conclusion, our model achieves high accuracy thanks to the high-quality dataset with effective data augmentation techniques, and architectural choices.
 **The RUN script successfully hits the great skill checks with high confidence.**
 
+## FAQ
+
+How to run the AI model with your GPU ?
+- Check if you have `pip install onnxruntime-gpu` and not onnxruntime (if not, uninstall onnxruntime before installing onnxruntime-gpu)
+- Check onnxruntime-gpu version compatibilities with CUDA, CUDNN and torch https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html#requirements
+- Install CUDA 12.x (I have 12.3)
+- Install torch with CUDA compute (I have 2.4.0 with cuda 12.1 compute platform) https://pytorch.org/get-started/locally/
+- Install CUDNN 9.x (I have 9.4)
+- Install last version of MSVC
+- Select "GPU" in the Auto skill check webUI, click "RUN" and check if you have a warning message
+
+If the script misses the great skill checks, be sure :
+- Your game FPS >= 60
+- The AI model FPS >= 60
+- Your ping is not too high (I have 40 ping and I hit 100% great skill checks)
+- Your game settings (such as resolution): your displayed images "last hit skill check frame" should be similar with the ones in my examples
+- You do not use a potato instead of a computer
+
+If you have low FPS values for the AI model, try this :
+- Switch device to gpu
+- Disable the energy saver settings in your computer settings
+- Run the script in administrator
 
 ## Acknowledgments
 
