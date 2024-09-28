@@ -4,7 +4,6 @@ import onnxruntime
 import pyautogui
 from PIL import Image
 
-
 class AI_model:
     MEAN = [0.485, 0.456, 0.406]
     STD = [0.229, 0.224, 0.225]
@@ -22,16 +21,27 @@ class AI_model:
                  10: {"desc": "wiggle (out)", "hit": False}
                  }
 
-    def __init__(self, onnx_filepath=None):
+    def __init__(self, onnx_filepath=None, use_gpu=False):
         if onnx_filepath is None:
             onnx_filepath = "model.onnx"
 
+        if use_gpu:
+            import torch  # Required to load cudnn, even if torch will not be directly used
+            execution_providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+        else:
+            execution_providers = ['CPUExecutionProvider']
+
         # Trained model
-        self.ort_session = onnxruntime.InferenceSession(onnx_filepath)
+        self.ort_session = onnxruntime.InferenceSession(onnx_filepath, providers=execution_providers)
         self.input_name = self.ort_session.get_inputs()[0].name
 
         self.mss = mss.mss()
         self.monitor = self._get_monitor_attributes()
+
+    def is_using_cuda(self):
+        active_providers = self.ort_session.get_providers()
+        is_using_cuda = "CUDAExecutionProvider" in active_providers
+        return is_using_cuda
 
     def _get_monitor_attributes(self):
         width, height = pyautogui.size()

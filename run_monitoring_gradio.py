@@ -8,15 +8,27 @@ from dbd.AI_model import AI_model
 from dbd.utils.directkeys import PressKey, ReleaseKey, SPACE
 
 
-def monitor(onnx_ai_model, debug_option):
+def monitor(onnx_ai_model, device, debug_option):
     if onnx_ai_model is None or not os.path.exists(onnx_ai_model) or ".onnx" not in onnx_ai_model:
         raise gr.Error("Invalid onnx file", duration=0)
+
+    if device is None:
+        raise gr.Error("Invalid device option")
 
     if debug_option is None:
         raise gr.Error("Invalid debug option")
 
     # AI model
-    ai_model = AI_model(onnx_ai_model)
+    use_gpu = (device == devices[1])
+    ai_model = AI_model(onnx_ai_model, use_gpu)
+
+    is_using_cuda = ai_model.is_using_cuda()
+    if is_using_cuda:
+        gr.Info("Running AI model on GPU (success)")
+    else:
+        gr.Info("Running AI model on CPU")
+        if device == devices[1]:
+            gr.Warning("Could not run AI model on GPU device. Check python console logs to debug.")
 
     # Variables
     t0 = time.time()
@@ -81,6 +93,7 @@ if __name__ == "__main__":
                      "Save all skill check frames in {} (will impact fps)".format(debug_folder)]
 
     fps_info = "Number of frames per second the AI model analyses the monitored frame. Must be equal (or greater than) 60 to hit great skill checks properly. Check The GitHub FAQ for more details"
+    devices = ["CPU (default)", "GPU"]
 
     demo = gr.Interface(title="DBD Auto skill check",
                         description="Please refer to https://github.com/Manuteaa/dbd_autoSkillCheck",
@@ -89,6 +102,7 @@ if __name__ == "__main__":
                         clear_btn=None,
 
                         inputs=[gr.Dropdown(label="ONNX model filepath", choices=["model.onnx"], value="model.onnx", info="Filepath of the ONNX model (trained AI model)"),
+                                gr.Radio(choices=devices, value=devices[0], label="Device the AI onnx model will use"),
                                 gr.Dropdown(label="Debug options", choices=debug_options, value=debug_options[0], info="Optional options for debugging or analytics")],
 
                         outputs=[gr.Number(label="AI model FPS", info=fps_info),
