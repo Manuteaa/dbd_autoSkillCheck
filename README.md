@@ -184,13 +184,13 @@ How to run the AI model with your GPU ?
 Why does the script do nothing ?
 - Check if the AI model monitors correctly your game: set the debug option of the webui to "display the monitored frame". Play the game and check if it displays correctly the skill check
 - Check if you have no error in the python console logs
+- Check if your game settings are not unusual (such as special resolution or game filters): your displayed images "last hit skill check frame" should be similar with the ones in my examples
+- You do not use a potato instead of a computer
 
 Why do I hit good skill checks instead of great ? Be sure :
 - Your game FPS >= 60
 - The AI model FPS >= 60
-- Your ping is not too high (I have 40 ping and I hit 100% great skill checks)
-- Your game settings are not unusual (such as special resolution or game filters): your displayed images "last hit skill check frame" should be similar with the ones in my examples
-- You do not use a potato instead of a computer
+- Your ping is not too high (<= 50 should be fine)
 
 I have lower values than 60 FPS for the AI model, what can I do ?:
 - Switch device to gpu
