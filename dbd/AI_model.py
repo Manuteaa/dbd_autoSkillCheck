@@ -5,8 +5,8 @@ import pyautogui
 from PIL import Image
 
 class AI_model:
-    MEAN = [0.485, 0.456, 0.406]
-    STD = [0.229, 0.224, 0.225]
+    MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+    STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
     pred_dict = {0: {"desc": "None", "hit": False},
                  1: {"desc": "repair-heal (great)", "hit": True},
@@ -62,14 +62,9 @@ class AI_model:
         return Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
 
     def pil_to_numpy(self, image_pil):
-        img = np.array(image_pil, dtype=np.float32)
-        img = img / 255.0
+        img = np.asarray(image_pil, dtype=np.float32) / 255.
         img = (img - self.MEAN) / self.STD
-
-        img = np.transpose(img, (2, 0, 1))
-        img = np.expand_dims(img, 0)
-
-        img = np.float32(img)
+        img = np.transpose(img, (2, 0, 1))[None, ...]
         return img
 
     def softmax(self, x):
