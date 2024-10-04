@@ -191,7 +191,7 @@ Why does the script do nothing ?
 - Check if the AI model monitors correctly your game: set the debug option of the webui to "display the monitored frame". Play the game and check if it displays correctly the skill check
 - Check if you have no error in the python console logs
 - Check if your game settings are not unusual (such as special resolution or game filters): your displayed images "last hit skill check frame" should be similar with the ones in my examples
-- You do not use a potato instead of a computer
+- Check if you do not use a potato instead of a computer
 
 Why do I hit good skill checks instead of great ? Be sure :
 - Your game FPS >= 60
@@ -199,13 +199,13 @@ Why do I hit good skill checks instead of great ? Be sure :
 - Your ping is not too high (<= 60 should be fine)
 - Disable Vsync and FSR in the game settings
 
-I have lower values than 60 FPS for the AI model, what can I do ?:
+I have lower values than 60 FPS for the AI model, what can I do ?
 - Switch device to gpu
 - Disable the energy saver settings in your computer settings
 - Run the script in administrator mode
 
 Why does the AI model hit the skill check too early and fails ?
-- You may experience a very low ping (this is good) combined with a better computer than mine. Edit the file `dbd/AI_model.py` and disable the ante-frontier hits (set hit variable to False, for example `2: {"desc": "repair-heal (ante-frontier)", "hit": False}`)
+- You may experience a very low ping (this is good) combined with a better computer than mine. Edit the file `dbd/AI_model.py` to disable the ante-frontier hits (set hit variable to False, for example `2: {"desc": "repair-heal (ante-frontier)", "hit": False}`)
 
 Does the script work well with the perk hyperfocus ?
 - Yes
