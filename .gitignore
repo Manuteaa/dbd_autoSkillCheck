@@ -5,3 +5,4 @@ dataset*/
 *.pyc
 lightning_logs/
 .ipynb_*
+saved_images/
