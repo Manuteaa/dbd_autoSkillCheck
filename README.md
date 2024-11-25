@@ -11,41 +11,43 @@ This tool is designed to improve gameplay performance and enhance the player's s
 
 <!-- TOC -->
 * [DBD Auto Skill Check](#dbd-auto-skill-check)
-  * [Features](#features)
-  * [Execution Instructions](#execution-instructions)
+* [Features](#features)
+* [Execution Instructions](#execution-instructions)
+  * [Windows standalone exe](#windows-standalone-exe)
+  * [From source](#from-source)
     * [Single prediction Web UI](#single-prediction-web-ui)
     * [Auto skill check Web UI](#auto-skill-check-web-ui)
-  * [What is a skill check](#what-is-a-skill-check)
-  * [Project details](#project-details)
-    * [Dataset](#dataset)
-    * [Architecture](#architecture)
-    * [Training](#training)
-    * [Inference](#inference)
-    * [Results](#results)
-  * [FAQ](#faq)
-  * [Acknowledgments](#acknowledgments)
+* [What is a skill check](#what-is-a-skill-check)
+* [Project details](#project-details)
+  * [Dataset](#dataset)
+  * [Architecture](#architecture)
+  * [Training](#training)
+  * [Inference](#inference)
+  * [Results](#results)
+* [FAQ](#faq)
+* [Acknowledgments](#acknowledgments)
 <!-- TOC -->
 
-## Features
+# Features
 - Real-time detection of skill checks (60fps)
 - High accuracy in recognizing **all types of skill checks (with a 98.7% precision, see details of [Results](#results))**
 - Automatic triggering of great skill checks through auto-pressing the space bar
 - Two different webUI to run the AI model
 
 
-## Execution Instructions
+# Execution Instructions
 
 You can run the code:
 - From the windows standalone exe: just download the .exe file and run it
 - From source: It's for you if you have some python knowledge, you want to customize the code or run it on GPU
 
-### Windows standalone exe
+## Windows standalone exe
 
 I will push a standalone windows executable (CPU only). Just run the .exe !
 
 Check here later, I'm still working on it...
 
-### From source
+## From source
 
 I have only tested the model on my own computer running Windows 11 with CUDA version 12.3. I provide two different scripts you can run, here the instructions.
 
@@ -55,7 +57,7 @@ Create your own python env (I have python 3.11) and install the necessary librar
 
 Then git clone the repo.
 
-#### Single prediction Web UI
+### Single prediction Web UI
 
 Run this script to test the AI model with images of the game.
 
@@ -70,7 +72,7 @@ Run this script to test the AI model with images of the game.
 |------------------------------------------------|------------------------------------------------|
 | ![](images/single_pred_1.png "Example repair") | ![](images/single_pred_2.png "Example wiggle") |
 
-#### Auto skill check Web UI
+### Auto skill check Web UI
 
 Run this script and play the game ! It will hit the space bar for you.
 
@@ -101,7 +103,7 @@ On the right of the web UI, we display :
 I had the problem of low FPS with Windows : when the script was on the background (when I played), the FPS dropped significantly. Running the script in admin solved the problem (see the [FAQ](#faq)).
 
 
-## What is a skill check
+# What is a skill check
 
 A skill check is a game mechanic in Dead by Daylight that allows the player to progress faster in a specific action such as repairing generators or healing teammates.
 It occurs randomly and requires players to press the space bar to stop the progression of a red cursor.
@@ -120,9 +122,9 @@ Here are examples of different great skill checks:
 Successfully hitting a skill check increases the speed of the corresponding action, and a greatly successful skill check provides even greater rewards. 
 On the other hand, missing a skill check reduces the action's progression speed and alerts the ennemi with a loud sound.
 
-## Project details
+# Project details
 
-### Dataset
+## Dataset
 We designed a custom dataset from in-game screen recordings and frame extraction of gameplay videos on youtube.
 To save disk space, we center-crop each frame to size 320x320 before saving.
 
@@ -138,7 +140,7 @@ To alleviate the laborious collection task, we employed data augmentation techni
 We developed a customized and optimized dataloader that automatically parses the dataset folder and assigns the correct label to each image based on its corresponding folder.
 Our data loaders use a custom sampler to handle imbalanced data.
 
-### Architecture
+## Architecture
 The skill check detection system is based on an encoder-decoder architecture. 
 
 We employ the MobileNet V3 Small architecture, specifically chosen for its trade-off between inference speed and accuracy. 
@@ -147,14 +149,14 @@ We also compared the architecture with the MobileNet V3 Large, but the accuracy 
 
 We had to manually modify the last layer of the decoder. Initially designed to classify 1000 different categories of real-world objects, we switched it to an 11-categories layer.
 
-### Training
+## Training
 
 We use a standard cross entropy loss to train the model and monitor the training process using per-category accuracy score.
 
 I trained the model using my own computer, and using the AWS _g6.4xlarge_ EC2 instance (around x1.5 faster to train than on my computer).
 
 
-### Inference
+## Inference
 We provide a script that loads the trained model and monitors the main screen.
 For each sampled frame, the script will center-crop and normalize the image then feed it to the AI model.
 
@@ -164,7 +166,7 @@ then it waits for a short period of time to avoid triggering the same skill chec
 To achieve real time results, we convert the model to ONNX format and use the ONNX runtime to perform inference. 
 We observed a 1.5x to 2x speedup compared to baseline inference.
 
-### Results
+## Results
 
 We test our model using a testing dataset of ~2000 images:
 
@@ -189,7 +191,7 @@ When combined with our screen monitoring script, we achieved a consistent 60fps 
 In conclusion, our model achieves high accuracy thanks to the high-quality dataset with effective data augmentation techniques, and architectural choices.
 **The RUN script successfully hits the great skill checks with high confidence.**
 
-## FAQ
+# FAQ
 
 How to run the AI model with your GPU ?
 - Check if you have `pip install onnxruntime-gpu` and not onnxruntime (if not, uninstall onnxruntime before installing onnxruntime-gpu)
@@ -230,7 +232,7 @@ What about the anti-cheat system ?
 - The script monitors a small crop of your main screen, and can press then release the space bar using [Windows MSDN](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes?redirectedfrom=MSDN) once each 0.5s maximum. I don't know if this can be detected as a cheat
 - I played the game quite a lot with the script on, and never had any problem. However, I can't and will not generalize, so I can't really answer to this question...
 
-## Acknowledgments
+# Acknowledgments
 
 A big thanks to [hemlock12](https://github.com/hemlock12) for the data collection help !
 
