@@ -34,6 +34,19 @@ This tool is designed to improve gameplay performance and enhance the player's s
 
 
 ## Execution Instructions
+
+You can run the code:
+- From the windows standalone exe: just download the .exe file and run it
+- From source: It's for you if you have some python knowledge, you want to customize the code or run it on GPU
+
+### Windows standalone exe
+
+I will push a standalone windows executable (CPU only). Just run the .exe !
+
+Check here later, I'm still working on it...
+
+### From source
+
 I have only tested the model on my own computer running Windows 11 with CUDA version 12.3. I provide two different scripts you can run, here the instructions.
 
 Create your own python env (I have python 3.11) and install the necessary libraries using the command :
@@ -42,7 +55,7 @@ Create your own python env (I have python 3.11) and install the necessary librar
 
 Then git clone the repo.
 
-### Single prediction Web UI
+#### Single prediction Web UI
 
 Run this script to test the AI model with images of the game.
 
@@ -57,7 +70,7 @@ Run this script to test the AI model with images of the game.
 |------------------------------------------------|------------------------------------------------|
 | ![](images/single_pred_1.png "Example repair") | ![](images/single_pred_2.png "Example wiggle") |
 
-### Auto skill check Web UI
+#### Auto skill check Web UI
 
 Run this script and play the game ! It will hit the space bar for you.
 
