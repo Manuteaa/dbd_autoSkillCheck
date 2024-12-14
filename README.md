@@ -38,14 +38,14 @@ This tool is designed to improve gameplay performance and enhance the player's s
 # Execution Instructions
 
 You can run the code:
-- From the windows standalone exe: just download the .exe file and run it
+- From the windows standalone app: just download the .exe file and run it (no install required)
 - From source: It's for you if you have some python knowledge, you want to customize the code or run it on GPU
 
-## Windows standalone exe
+## Windows standalone app
 
-I will push a standalone windows executable (CPU only). Just run the .exe !
+It's for you if you don't want to install anything, but just run the AI script.
 
-Check here later, I'm still working on it...
+Go to the releases page for instructions: https://github.com/Manuteaa/dbd_autoSkillCheck/releases
 
 ## From source
 
