@@ -13,7 +13,7 @@ This tool is designed to improve gameplay performance and enhance the player's s
 * [DBD Auto Skill Check](#dbd-auto-skill-check)
 * [Features](#features)
 * [Execution Instructions](#execution-instructions)
-  * [Windows standalone exe](#windows-standalone-exe)
+  * [Windows standalone app](#windows-standalone-app)
   * [From source](#from-source)
     * [Single prediction Web UI](#single-prediction-web-ui)
     * [Auto skill check Web UI](#auto-skill-check-web-ui)
@@ -221,6 +221,7 @@ I have lower values than 60 FPS for the AI model, what can I do ?
 
 Why does the AI model hit the skill check too early and fails ?
 - You may experience a very low ping (this is good) combined with a better computer than mine. Edit the file `dbd/AI_model.py` to disable the ante-frontier hits (set hit variable to False, for example `2: {"desc": "repair-heal (ante-frontier)", "hit": False}`)
+- In the last version, disable the ante-frontier skill check hits: uncheck this hit option in the Web UI
 
 Does the script work well with the perk hyperfocus ?
 - Yes

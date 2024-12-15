@@ -12,7 +12,7 @@ from dbd.AI_model import AI_model
 from dbd.utils.directkeys import PressKey, ReleaseKey, SPACE
 
 
-def monitor(onnx_ai_model, device, debug_option):
+def monitor(onnx_ai_model, device, debug_option, hit_ante):
     if onnx_ai_model is None or not os.path.exists(onnx_ai_model) or ".onnx" not in onnx_ai_model:
         raise Error("Invalid onnx file", duration=0)
 
@@ -33,6 +33,9 @@ def monitor(onnx_ai_model, device, debug_option):
         Info("Running AI model on CPU")
         if device == devices[1]:
             Warning("Could not run AI model on GPU device. Check python console logs to debug.")
+
+    if not hit_ante:
+        ai_model.pred_dict[2]["hit"] = False
 
     # Variables
     t0 = time()
