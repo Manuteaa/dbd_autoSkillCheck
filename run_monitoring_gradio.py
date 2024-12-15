@@ -1,8 +1,12 @@
 import os
-import pathlib
-import time
+from pathlib import Path
+from time import time, sleep
 
-import gradio as gr
+from gradio import (
+    Interface, Dropdown, Radio, Checkbox, Number, Image, Label,
+    update,
+    Info, Warning, Error
+)
 
 from dbd.AI_model import AI_model
 from dbd.utils.directkeys import PressKey, ReleaseKey, SPACE
@@ -10,13 +14,13 @@ from dbd.utils.directkeys import PressKey, ReleaseKey, SPACE
 
 def monitor(onnx_ai_model, device, debug_option):
     if onnx_ai_model is None or not os.path.exists(onnx_ai_model) or ".onnx" not in onnx_ai_model:
-        raise gr.Error("Invalid onnx file", duration=0)
+        raise Error("Invalid onnx file", duration=0)
 
     if device is None:
-        raise gr.Error("Invalid device option")
+        raise Error("Invalid device option")
 
     if debug_option is None:
-        raise gr.Error("Invalid debug option")
+        raise Error("Invalid debug option")
 
     # AI model
     use_gpu = (device == devices[1])
@@ -24,22 +28,22 @@ def monitor(onnx_ai_model, device, debug_option):
 
     is_using_cuda = ai_model.is_using_cuda()
     if is_using_cuda:
-        gr.Info("Running AI model on GPU (success)")
+        Info("Running AI model on GPU (success)")
     else:
-        gr.Info("Running AI model on CPU")
+        Info("Running AI model on CPU")
         if device == devices[1]:
-            gr.Warning("Could not run AI model on GPU device. Check python console logs to debug.")
+            Warning("Could not run AI model on GPU device. Check python console logs to debug.")
 
     # Variables
-    t0 = time.time()
+    t0 = time()
     nb_frames = 0
     nb_hits = 0
 
     # Create debug folders
     if debug_option == debug_options[2] or debug_option == debug_options[3]:
-        pathlib.Path(debug_folder).mkdir(exist_ok=True)
+        Path(debug_folder).mkdir(exist_ok=True)
         for folder_idx in range(len(ai_model.pred_dict)):
-            pathlib.Path(os.path.join(debug_folder, str(folder_idx))).mkdir(exist_ok=True)
+            Path(os.path.join(debug_folder, str(folder_idx))).mkdir(exist_ok=True)
 
     while True:
         screenshot = ai_model.grab_screenshot()
@@ -58,29 +62,29 @@ def monitor(onnx_ai_model, device, debug_option):
             PressKey(SPACE)
             ReleaseKey(SPACE)
 
-            yield gr.update(), image_pil, probs
+            yield update(), image_pil, probs
 
             if debug_option == debug_options[2]:
                 path = os.path.join(debug_folder, str(pred), "hit_{}.png".format(nb_hits))
                 image_pil.save(path)
                 nb_hits += 1
 
-            time.sleep(0.5)
-            t0 = time.time()
+            sleep(0.5)
+            t0 = time()
             nb_frames = 0
             continue
 
         # Compute fps
-        t_diff = time.time() - t0
+        t_diff = time() - t0
         if t_diff > 1.0:
             fps = round(nb_frames / t_diff, 1)
 
             if debug_option == debug_options[1]:
-                yield fps, image_pil, gr.update()
+                yield fps, image_pil, update()
             else:
-                yield fps, gr.update(), gr.update()
+                yield fps, update(), update()
 
-            t0 = time.time()
+            t0 = time()
             nb_frames = 0
 
 
@@ -95,18 +99,20 @@ if __name__ == "__main__":
     fps_info = "Number of frames per second the AI model analyses the monitored frame. Must be equal (or greater than) 60 to hit great skill checks properly. Check The GitHub FAQ for more details"
     devices = ["CPU (default)", "GPU"]
 
-    demo = gr.Interface(title="DBD Auto skill check",
+    demo = Interface(title="DBD Auto skill check",
                         description="Please refer to https://github.com/Manuteaa/dbd_autoSkillCheck",
                         fn=monitor,
                         submit_btn="RUN",
                         clear_btn=None,
 
-                        inputs=[gr.Dropdown(label="ONNX model filepath", choices=["model.onnx"], value="model.onnx", info="Filepath of the ONNX model (trained AI model)"),
-                                gr.Radio(choices=devices, value=devices[0], label="Device the AI onnx model will use"),
-                                gr.Dropdown(label="Debug options", choices=debug_options, value=debug_options[0], info="Optional options for debugging or analytics")],
+                        inputs=[Dropdown(label="ONNX model filepath", choices=["model.onnx"], value="model.onnx", info="Filepath of the ONNX model (trained AI model)"),
+                                Radio(choices=devices, value=devices[0], label="Device the AI onnx model will use"),
+                                Dropdown(label="Debug options", choices=debug_options, value=debug_options[0], info="Optional options for debugging or analytics"),
+                                Checkbox(label="Hit ante-frontier skill checks (uncheck if skill checks are hit too early)", value=True, info="Hit options")
+                                ],
 
-                        outputs=[gr.Number(label="AI model FPS", info=fps_info),
-                                 gr.Image(label="Last hit skill check frame", height=224),
-                                 gr.Label(label="Skill check recognition")]
+                        outputs=[Number(label="AI model FPS", info=fps_info),
+                                 Image(label="Last hit skill check frame", height=224),
+                                 Label(label="Skill check recognition")]
                         )
     demo.launch()

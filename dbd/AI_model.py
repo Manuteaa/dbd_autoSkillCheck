@@ -1,8 +1,9 @@
-import mss
 import numpy as np
-import onnxruntime
-import pyautogui
 from PIL import Image
+from mss import mss
+from onnxruntime import InferenceSession
+from pyautogui import size as pyautogui_size
+
 
 class AI_model:
     MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
@@ -32,10 +33,10 @@ class AI_model:
             execution_providers = ['CPUExecutionProvider']
 
         # Trained model
-        self.ort_session = onnxruntime.InferenceSession(onnx_filepath, providers=execution_providers)
+        self.ort_session = InferenceSession(onnx_filepath, providers=execution_providers)
         self.input_name = self.ort_session.get_inputs()[0].name
 
-        self.mss = mss.mss()
+        self.mss = mss()
         self.monitor = self._get_monitor_attributes()
 
     def is_using_cuda(self):
@@ -44,7 +45,7 @@ class AI_model:
         return is_using_cuda
 
     def _get_monitor_attributes(self):
-        width, height = pyautogui.size()
+        width, height = pyautogui_size()
         object_size = 224
 
         monitor = {"top": height // 2 - object_size // 2,
