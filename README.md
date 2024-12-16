@@ -1,6 +1,6 @@
 # DBD Auto Skill Check
 
-The Dead by Daylight Auto Skill Check is a tool developed using deep learning techniques (PyTorch) to automatically detect and successfully hit skill checks in the popular game Dead by Daylight. 
+The Dead by Daylight Auto Skill Check is a tool developed using AI (deep learning with PyTorch) to automatically detect and successfully hit skill checks in the popular game Dead by Daylight. 
 This tool is designed to improve gameplay performance and enhance the player's skill in the game. 
 
 
@@ -237,7 +237,6 @@ What about the anti-cheat system ?
 
 A big thanks to [hemlock12](https://github.com/hemlock12) for the data collection help !
 
-The project was made and is maintained by me ([Manuteaa](https://github.com/Manuteaa)). If you like it, and want to tell it you can simply star this project !
-You want to say a thank-you ? Discuss new project(s) collaboration (for example for the killer side) ? Contact me on discord: manuteaa
+The project was made and is maintained by me ([Manuteaa](https://github.com/Manuteaa)). If you enjoy this project, consider giving it a ⭐! Starring the repository helps others discover it, and shows support for the work put into it. Your stars motivate me to add new features and address any bugs.
 
-An issue ? Questions ? Suggestions ? Just open a new issue
+An issue ? Question ? Suggestion ? Just open a new issue. You can also join the discord server: https://discord.gg/bkfJE2Ha
