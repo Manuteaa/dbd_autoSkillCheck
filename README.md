@@ -239,4 +239,4 @@ A big thanks to [hemlock12](https://github.com/hemlock12) for the data collectio
 
 The project was made and is maintained by me ([Manuteaa](https://github.com/Manuteaa)). If you enjoy this project, consider giving it a ⭐! Starring the repository helps others discover it, and shows support for the work put into it. Your stars motivate me to add new features and address any bugs.
 
-An issue ? Question ? Suggestion ? Just open a new issue. You can also join the discord server: https://discord.gg/bkfJE2Ha
+An issue ? Question ? Suggestion ? Just open a new issue. You can also join the [discord server](https://discord.gg/DPVDWz9xeF)
