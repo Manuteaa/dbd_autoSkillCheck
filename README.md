@@ -32,7 +32,7 @@ This tool is designed to improve gameplay performance and enhance the player's s
 - Real-time detection of skill checks (60fps)
 - High accuracy in recognizing **all types of skill checks (with a 98.7% precision, see details of [Results](#results))**
 - Automatic triggering of great skill checks through auto-pressing the space bar
-- Two different webUI to run the AI model
+- A webUI to run the AI model
 
 
 # Execution Instructions
@@ -43,11 +43,11 @@ You can run the code:
 
 ## Windows standalone app
 
-It's for you if you don't want to install anything, but just run the AI script.
+Use the standalone app if you don't want to install anything, but just run the AI script.
 
 Go to the releases page for instructions: https://github.com/Manuteaa/dbd_autoSkillCheck/releases
 
-## From source
+## Build from source
 
 I have only tested the model on my own computer running Windows 11 with CUDA version 12.3. I provide two different scripts you can run, here the instructions.
 
@@ -102,8 +102,9 @@ On the right of the web UI, we display :
 **Both the game AND the AI model FPS must run at 60fps (or more) in order to hit correctly the great skill checks.** 
 I had the problem of low FPS with Windows : when the script was on the background (when I played), the FPS dropped significantly. Running the script in admin solved the problem (see the [FAQ](#faq)).
 
+# Project details
 
-# What is a skill check
+## What is a skill check
 
 A skill check is a game mechanic in Dead by Daylight that allows the player to progress faster in a specific action such as repairing generators or healing teammates.
 It occurs randomly and requires players to press the space bar to stop the progression of a red cursor.
@@ -122,7 +123,6 @@ Here are examples of different great skill checks:
 Successfully hitting a skill check increases the speed of the corresponding action, and a greatly successful skill check provides even greater rewards. 
 On the other hand, missing a skill check reduces the action's progression speed and alerts the ennemi with a loud sound.
 
-# Project details
 
 ## Dataset
 We designed a custom dataset from in-game screen recordings and frame extraction of gameplay videos on youtube.
@@ -205,7 +205,7 @@ How to run the AI model with your GPU ?
 Why does the script do nothing ?
 - Check if the AI model monitors correctly your game: set the debug option of the webui to "display the monitored frame". Play the game and check if it displays correctly the skill check
 - Check if you have no error in the python console logs
-- Check if your game settings are not unusual (such as special resolution or game filters): your displayed images "last hit skill check frame" should be similar with the ones in my examples
+- Use standard game settings (I recommend using 1080p resolution without any game filters): your displayed images "last hit skill check frame" should be similar with the ones in my examples
 - Check if you do not use a potato instead of a computer
 
 Why do I hit good skill checks instead of great ? Be sure :
@@ -220,11 +220,13 @@ I have lower values than 60 FPS for the AI model, what can I do ?
 - Run the script in administrator mode
 
 Why does the AI model hit the skill check too early and fails ?
-- You may experience a very low ping (this is good) combined with a better computer than mine. Edit the file `dbd/AI_model.py` to disable the ante-frontier hits (set hit variable to False, for example `2: {"desc": "repair-heal (ante-frontier)", "hit": False}`)
-- In the last version, disable the ante-frontier skill check hits: uncheck this hit option in the Web UI
+- Disable the ante-frontier skill check hits: uncheck this hit option in the Web UI
 
 Does the script work well with the perk hyperfocus ?
 - Yes
+
+Why does my CPU hit 100% usage ?
+- The script's monitoring loop is currently uncapped. The AI model only needs to analyze 60 frames per second to function properly. Right now, the script processes as many frames per second as possible, resulting in maximum CPU usage. In a next update I'll limit the AI model to 60 FPS to help reduce CPU usage.
 
 Does the script work well for skill checks in random locations (doctor skill checks) ?
 - Unfortunately, the script only monitors a small part of the center of your screen. It can not see the skill checks outside this area. Even if you make it work by editing the code (like capturing the whole screen and resize the frames to 224x224) the AI model was not trained to handle these special skill checks, so it will not work very well...
@@ -235,8 +237,11 @@ What about the anti-cheat system ?
 
 # Acknowledgments
 
-A big thanks to [hemlock12](https://github.com/hemlock12) for the data collection help !
-
 The project was made and is maintained by me ([Manuteaa](https://github.com/Manuteaa)). If you enjoy this project, consider giving it a ⭐! Starring the repository helps others discover it, and shows support for the work put into it. Your stars motivate me to add new features and address any bugs.
 
-An issue ? Question ? Suggestion ? Just open a new issue. You can also join the discord server: https://discord.gg/bkfJE2Ha
+Feel free to open a new issue for any question, suggestion or issue. You can also join the discord server: https://discord.gg/bkfJE2Ha where we address some questions, provide additional guides and where you can find other players !
+
+- A big thanks to [hemlock12](https://github.com/hemlock12) for the data collection help !
+- Thanks to [SouthernFrenzy](https://github.com/SouthernFrenzy) for the help and time to manage the discord server
+- Thanks [KevinSade](https://github.com/KevinSade) for the guides and contribution to the discord server
+
