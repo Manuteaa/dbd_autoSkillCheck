@@ -3,34 +3,13 @@ from PIL import Image
 from mss import mss
 from onnxruntime import InferenceSession
 from pyautogui import size as pyautogui_size
-from screeninfo import get_monitors
-
-
-def get_dpi_scaling():
-    try:
-        # Get the primary monitor
-        monitor = get_monitors()[0]
-
-        # Calculate the DPI scaling factor by comparing physical resolution to effective screen resolution
-        physical_width, physical_height = monitor.width, monitor.height
-        screen_width, screen_height = pyautogui_size()
-
-        # DPI scaling factor is the ratio of screen size to the monitor's physical resolution
-        dpi_scaling = screen_width / physical_width
-        return dpi_scaling
-
-    except Exception as e:
-        print(f"Error fetching DPI scaling: {e}")
-        return 1  # If error occurs, assume 100% scale (default)
 
 
 def get_monitor_attributes():
     width, height = pyautogui_size()
-    dpi_scaling = get_dpi_scaling()
-    object_size = int(224 / dpi_scaling)
-
-    print("DPI scaling is", dpi_scaling)
-    print("New cropping size is", object_size)
+    object_size_h_ratio = 224 / 1080
+    object_size = int(object_size_h_ratio * height)
+    print("Cropping size is", object_size)
 
     monitor = {"top": height // 2 - object_size // 2,
                "left": width // 2 - object_size // 2,

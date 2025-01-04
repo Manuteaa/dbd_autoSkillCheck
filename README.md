@@ -53,7 +53,7 @@ I have only tested the model on my own computer running Windows 11 with CUDA ver
 
 Create your own python env (I have python 3.11) and install the necessary libraries using the command :
 
-`pip install numpy mss onnxruntime-gpu pyautogui IPython pillow gradio screeninfo`
+`pip install numpy mss onnxruntime-gpu pyautogui IPython pillow gradio`
 
 Then git clone the repo.
 
