@@ -53,7 +53,7 @@ I have only tested the model on my own computer running Windows 11 with CUDA ver
 
 Create your own python env (I have python 3.11) and install the necessary libraries using the command :
 
-`pip install numpy mss onnxruntime-gpu pyautogui IPython pillow gradio`
+`pip install numpy mss onnxruntime-gpu pyautogui IPython pillow gradio screeninfo`
 
 Then git clone the repo.
 
@@ -205,7 +205,7 @@ How to run the AI model with your GPU ?
 Why does the script do nothing ?
 - Check if the AI model monitors correctly your game: set the debug option of the webui to "display the monitored frame". Play the game and check if it displays correctly the skill check
 - Check if you have no error in the python console logs
-- Use standard game settings (I recommend using 1080p resolution without any game filters): your displayed images "last hit skill check frame" should be similar with the ones in my examples
+- Use standard game settings (I recommend using 1080p at 100% resolution without any game filters): your displayed images "last hit skill check frame" should be similar with the ones in my examples
 - Check if you do not use a potato instead of a computer
 
 Why do I hit good skill checks instead of great ? Be sure :
@@ -224,9 +224,6 @@ Why does the AI model hit the skill check too early and fails ?
 
 Does the script work well with the perk hyperfocus ?
 - Yes
-
-Why does my CPU hit 100% usage ?
-- The script's monitoring loop is currently uncapped. The AI model only needs to analyze 60 frames per second to function properly. Right now, the script processes as many frames per second as possible, resulting in maximum CPU usage. In a next update I'll limit the AI model to 60 FPS to help reduce CPU usage.
 
 Does the script work well for skill checks in random locations (doctor skill checks) ?
 - Unfortunately, the script only monitors a small part of the center of your screen. It can not see the skill checks outside this area. Even if you make it work by editing the code (like capturing the whole screen and resize the frames to 224x224) the AI model was not trained to handle these special skill checks, so it will not work very well...
