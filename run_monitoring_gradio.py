@@ -12,7 +12,7 @@ from dbd.AI_model import AI_model
 from dbd.utils.directkeys import PressKey, ReleaseKey, SPACE
 
 
-def monitor(onnx_ai_model, device, debug_option, hit_ante):
+def monitor(onnx_ai_model, device, debug_option, hit_ante, cap_fps):
     if onnx_ai_model is None or not os.path.exists(onnx_ai_model) or ".onnx" not in onnx_ai_model:
         raise Error("Invalid onnx file", duration=0)
 
@@ -37,16 +37,19 @@ def monitor(onnx_ai_model, device, debug_option, hit_ante):
     if not hit_ante:
         ai_model.pred_dict[2]["hit"] = False
 
-    # Variables
-    t0 = time()
-    nb_frames = 0
-    nb_hits = 0
-
     # Create debug folders
     if debug_option == debug_options[2] or debug_option == debug_options[3]:
         Path(debug_folder).mkdir(exist_ok=True)
         for folder_idx in range(len(ai_model.pred_dict)):
             Path(os.path.join(debug_folder, str(folder_idx))).mkdir(exist_ok=True)
+
+    # Variables
+    t0 = time()
+    nb_frames = 0
+    nb_hits = 0
+
+    time_per_iteration = 1 / 65.  # We target 65 fps
+    t_start_iteration = time()
 
     while True:
         screenshot = ai_model.grab_screenshot()
@@ -90,6 +93,15 @@ def monitor(onnx_ai_model, device, debug_option, hit_ante):
             t0 = time()
             nb_frames = 0
 
+        # Cap AI model FPS
+        if cap_fps:
+            iteration_time = time() - t_start_iteration
+            if iteration_time < time_per_iteration:
+                sleep_time = time_per_iteration - iteration_time
+                sleep(sleep_time)
+
+            t_start_iteration = time()
+
 
 if __name__ == "__main__":
     debug_folder = "saved_images"
@@ -111,7 +123,8 @@ if __name__ == "__main__":
                         inputs=[Dropdown(label="ONNX model filepath", choices=["model.onnx"], value="model.onnx", info="Filepath of the ONNX model (trained AI model)"),
                                 Radio(choices=devices, value=devices[0], label="Device the AI onnx model will use"),
                                 Dropdown(label="Debug options", choices=debug_options, value=debug_options[0], info="Optional options for debugging or analytics"),
-                                Checkbox(label="Hit ante-frontier skill checks (uncheck if skill checks are hit too early)", value=True, info="Hit options")
+                                Checkbox(label="Hit ante-frontier skill checks (uncheck if skill checks are hit too early)", value=True, info="Hit options"),
+                                Checkbox(label="Cap AI model FPS to 60-65 (can reduce CPU usage)", value=True, info="AI options"),
                                 ],
 
                         outputs=[Number(label="AI model FPS", info=fps_info),
