@@ -33,6 +33,7 @@ This tool is designed to improve gameplay performance and enhance the player's s
 - High accuracy in recognizing **all types of skill checks (with a 98.7% precision, see details of [Results](#results))**
 - Automatic triggering of great skill checks through auto-pressing the space bar
 - A webUI to run the AI model
+- A GPU mode and a slow-CPU-usage mode to reduce CPU overhead
 
 
 # Execution Instructions
@@ -81,8 +82,9 @@ Run this script and play the game ! It will hit the space bar for you.
 1) Select the trained AI model (default to `model.onnx` available in this repo)
 2) Select the device to use. Select "CPU", except if you need to improve the AI model FPS [FAQ](#faq)
 3) Choose debug options. I recommend setting this option to None. If you want to check which screen the script is monitoring, you can select the first option. If the AI struggles recognizing the skill checks, select the second option to save the results, then you can upload the images in a new GitHub issue
-4) Click 'RUN'
-5) You can STOP and RUN the script from the Web UI at will, for example when waiting in the game lobby
+4) Keep the default values for the next options. These options are mainly requested features by the community.
+5) Click 'RUN'
+6) You can STOP and RUN the script from the Web UI at will, for example when waiting in the game lobby
 
 Your main screen is now monitored meaning that frames are regularly sampled (with a center-crop) and analysed with the trained AI model.
 You can play the game on your main monitor.
@@ -215,12 +217,13 @@ Why do I hit good skill checks instead of great ? Be sure :
 - Disable Vsync and FSR in the game settings
 
 I have lower values than 60 FPS for the AI model, what can I do ?
+- Uncheck the `Reduce CPU usage` AI option in the Web UI
 - Switch device to gpu
 - Disable the energy saver settings in your computer settings
 - Run the script in administrator mode
 
 Why does the AI model hit the skill check too early and fails ?
-- Disable the ante-frontier skill check hits: uncheck this hit option in the Web UI
+- Uncheck the `Hit ante-frontier skill checks` hit option in the Web UI
 
 Does the script work well with the perk hyperfocus ?
 - Yes

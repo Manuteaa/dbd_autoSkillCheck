@@ -24,7 +24,7 @@ def monitor(onnx_ai_model, device, debug_option, hit_ante, cap_fps):
 
     # AI model
     use_gpu = (device == devices[1])
-    ai_model = AI_model(onnx_ai_model, use_gpu)
+    ai_model = AI_model(onnx_ai_model, use_gpu, cap_fps)
 
     is_using_cuda = ai_model.is_using_cuda()
     if is_using_cuda:
@@ -48,7 +48,7 @@ def monitor(onnx_ai_model, device, debug_option, hit_ante, cap_fps):
     nb_frames = 0
     nb_hits = 0
 
-    time_per_iteration = 1 / 65.  # We target 65 fps
+    time_per_iteration = 1 / 80.  # Cap to 80fps max
     t_start_iteration = time()
 
     while True:
@@ -124,7 +124,7 @@ if __name__ == "__main__":
                                 Radio(choices=devices, value=devices[0], label="Device the AI onnx model will use"),
                                 Dropdown(label="Debug options", choices=debug_options, value=debug_options[0], info="Optional options for debugging or analytics"),
                                 Checkbox(label="Hit ante-frontier skill checks (uncheck if skill checks are hit too early)", value=True, info="Hit options"),
-                                Checkbox(label="Cap AI model FPS to 60-65 (can reduce CPU usage)", value=True, info="AI options"),
+                                Checkbox(label="Reduce CPU usage (uncheck if AI model FPS < 60). No impact in GPU mode", value=True, info="AI options"),
                                 ],
 
                         outputs=[Number(label="AI model FPS", info=fps_info),

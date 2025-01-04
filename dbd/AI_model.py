@@ -1,7 +1,7 @@
 import numpy as np
 from PIL import Image
 from mss import mss
-from onnxruntime import InferenceSession
+from onnxruntime import InferenceSession, SessionOptions, ExecutionMode, GraphOptimizationLevel
 from pyautogui import size as pyautogui_size
 
 
@@ -9,7 +9,6 @@ def get_monitor_attributes():
     width, height = pyautogui_size()
     object_size_h_ratio = 224 / 1080
     object_size = int(object_size_h_ratio * height)
-    print("Cropping size is", object_size)
 
     monitor = {"top": height // 2 - object_size // 2,
                "left": width // 2 - object_size // 2,
@@ -36,18 +35,28 @@ class AI_model:
                  10: {"desc": "wiggle (out)", "hit": False}
                  }
 
-    def __init__(self, onnx_filepath=None, use_gpu=False):
+    def __init__(self, onnx_filepath=None, use_gpu=False, disable_cpu_optim=False):
         if onnx_filepath is None:
             onnx_filepath = "model.onnx"
+
+        sess_options = SessionOptions()
 
         if use_gpu:
             import torch  # Required to load cudnn, even if torch will not be directly used
             execution_providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+
         else:
             execution_providers = ['CPUExecutionProvider']
 
+            if disable_cpu_optim:
+                # Disable some optimizations in order to reduce CPU overhead
+                sess_options.execution_mode = ExecutionMode.ORT_SEQUENTIAL
+                sess_options.graph_optimization_level = GraphOptimizationLevel.ORT_DISABLE_ALL
+                sess_options.intra_op_num_threads = 1
+                sess_options.inter_op_num_threads = 1
+
         # Trained model
-        self.ort_session = InferenceSession(onnx_filepath, providers=execution_providers)
+        self.ort_session = InferenceSession(onnx_filepath, providers=execution_providers, sess_options=sess_options)
         self.input_name = self.ort_session.get_inputs()[0].name
 
         self.mss = mss()
