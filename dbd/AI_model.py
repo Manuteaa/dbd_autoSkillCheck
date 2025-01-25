@@ -35,7 +35,7 @@ class AI_model:
                  10: {"desc": "wiggle (out)", "hit": False}
                  }
 
-    def __init__(self, onnx_filepath=None, use_gpu=False, disable_cpu_optim=False):
+    def __init__(self, onnx_filepath=None, use_gpu=False, nb_cpu_threads=None):
         if onnx_filepath is None:
             onnx_filepath = "model.onnx"
 
@@ -48,12 +48,10 @@ class AI_model:
         else:
             execution_providers = ['CPUExecutionProvider']
 
-            if disable_cpu_optim:
-                # Disable some optimizations in order to reduce CPU overhead
-                sess_options.execution_mode = ExecutionMode.ORT_SEQUENTIAL
-                sess_options.graph_optimization_level = GraphOptimizationLevel.ORT_DISABLE_ALL
-                sess_options.intra_op_num_threads = 1
-                sess_options.inter_op_num_threads = 1
+            if nb_cpu_threads is not None:
+                # Reduce CPU overhead
+                sess_options.intra_op_num_threads = nb_cpu_threads
+                sess_options.inter_op_num_threads = nb_cpu_threads
 
         # Trained model
         self.ort_session = InferenceSession(onnx_filepath, providers=execution_providers, sess_options=sess_options)
