@@ -15,8 +15,7 @@ This tool is designed to improve gameplay performance and enhance the player's s
 * [Execution Instructions](#execution-instructions)
   * [Windows standalone app](#windows-standalone-app)
   * [Build from source](#build-from-source)
-    * [Single prediction Web UI](#single-prediction-web-ui)
-    * [Auto skill check Web UI](#auto-skill-check-web-ui)
+  * [Auto skill-check Web UI](#auto-skill-check-web-ui)
 * [Project details](#project-details)
   * [What is a skill check](#what-is-a-skill-check)
   * [Dataset](#dataset)
@@ -46,47 +45,33 @@ You can run the code:
 
 Use the standalone app if you don't want to install anything, but just run the AI script.
 
-Go to the releases page for instructions: https://github.com/Manuteaa/dbd_autoSkillCheck/releases
+Go to the [releases page](https://github.com/Manuteaa/dbd_autoSkillCheck/releases) for instructions, then learn how to use the script in the [Auto skill-check Web UI instructions](#auto-skill-check-web-ui).
 
 ## Build from source
 
-I have only tested the model on my own computer running Windows 11 with CUDA version 12.3. I provide two different scripts you can run, here the instructions.
+I have only tested the model on my own computer running Windows 11 with CUDA version 12.3. I provide two different scripts you can run.
 
 Create your own python env (I have python 3.11) and install the necessary libraries using the command :
 
 `pip install numpy mss onnxruntime-gpu pyautogui IPython pillow gradio`
 
-Then git clone the repo.
+Then git clone the repo and follow the [Auto skill-check Web UI instructions](#auto-skill-check-web-ui).
 
-### Single prediction Web UI
-
-Run this script to test the AI model with images of the game.
-
-`python run_single_pred_gradio.py`
-
-1) Select the trained AI model (default to `model.onnx` available in this repo)
-2) Upload your image
-3) Click Submit
-4) On the right, it displays the sorted probabilities of the skill check recognition
-
-| SINGLE prediction example 1                    | SINGLE prediction example 2                    |
-|------------------------------------------------|------------------------------------------------|
-| ![](images/single_pred_1.png "Example repair") | ![](images/single_pred_2.png "Example wiggle") |
-
-### Auto skill check Web UI
+## Auto skill-check Web UI
 
 Run this script and play the game ! It will hit the space bar for you.
 
-`python run_monitoring_gradio.py`
+- When building from source: `python run_monitoring_gradio.py`
+- When using the standalone app: run `run_monitoring_gradio.exe`
 
-1) Select the trained AI model (default to `model.onnx` available in this repo)
-2) Select the device to use. Select "CPU", except if you need to improve the AI model FPS [FAQ](#faq)
-3) Choose debug options. I recommend setting this option to None. If you want to check which screen the script is monitoring, you can select the first option. If the AI struggles recognizing the skill checks, select the second option to save the results, then you can upload the images in a new GitHub issue
-4) Keep the default values for the next options. These options are mainly requested features by the community.
+1) Select the trained AI model (default to `model.onnx` available in this repo, and included within the standalone app)
+2) Select the device to use. Use default CPU device. GPU is not available with the standalone app. With python, follow the [FAQ](#faq) instructions if you want to use  GPU
+3) Choose debug options. If you want to check which screen the script is monitoring, you can select the first option. If the AI struggles recognizing the skill checks, select the second option to save the results, then you can upload the images in a new GitHub issue
+4) Select additional features options. Keep the default values unless you have read the [FAQ](#faq) and know what you are doing
 5) Click 'RUN'
 6) You can STOP and RUN the script from the Web UI at will, for example when waiting in the game lobby
 
-Your main screen is now monitored meaning that frames are regularly sampled (with a center-crop) and analysed with the trained AI model.
+Your main screen is now monitored meaning that frames are regularly sampled (with a center-crop) and analysed locally with the trained AI model.
 You can play the game on your main monitor.
 When a great skill check is detected, the SPACE key is automatically pressed, then it waits for 0.5s to avoid triggering the same skill check multiple times in a row.
 
@@ -207,23 +192,25 @@ How to run the AI model with your GPU ?
 Why does the script do nothing ?
 - Check if the AI model monitors correctly your game: set the debug option of the webui to "display the monitored frame". Play the game and check if it displays correctly the skill check
 - Check if you have no error in the python console logs
-- Use standard game settings (I recommend using 1080p at 100% resolution without any game filters): your displayed images "last hit skill check frame" should be similar with the ones in my examples
+- Use standard game settings (I recommend using 1080p at 100% resolution without any game filters, no vsync, no FSR): your displayed images "last hit skill check frame" should be similar with the ones in my examples
 - Check if you do not use a potato instead of a computer
 
 Why do I hit good skill checks instead of great ? Be sure :
 - Your game FPS >= 60
 - The AI model FPS >= 60
 - Your ping is not too high (<= 60 should be fine)
-- Disable Vsync and FSR in the game settings
+- Use standard game settings (I recommend using 1080p at 100% resolution without any game filters, no vsync, no FSR)
+- In the `Features options` of the WebUI, decrease the `Ante-frontier hit delay` value
+
 
 I have lower values than 60 FPS for the AI model, what can I do ?
-- Uncheck the `Reduce CPU usage` AI option in the Web UI
+- In the `Features options` of the WebUI, increase the `CPU workload` option to `normal` or `max`
 - Switch device to gpu
 - Disable the energy saver settings in your computer settings
 - Run the script in administrator mode
 
-Why does the AI model hit the skill check too early and fails ?
-- Uncheck the `Hit ante-frontier skill checks` hit option in the Web UI
+Why does the AI model hit the skill check too early and fail ?
+- In the `Features options` of the WebUI, increase the `Ante-frontier hit delay` value
 
 Does the script work well with the perk hyperfocus ?
 - Yes
@@ -233,7 +220,7 @@ Does the script work well for skill checks in random locations (doctor skill che
 
 What about the anti-cheat system ?
 - The script monitors a small crop of your main screen, and can press then release the space bar using [Windows MSDN](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes?redirectedfrom=MSDN) once each 0.5s maximum. I don't know if this can be detected as a cheat
-- I played the game quite a lot with the script on, and never had any problem. However, I can't and will not generalize, so I can't really answer to this question...
+- I played the game quite a lot with the script on, and never had any problem so far...
 
 # Acknowledgments
 
