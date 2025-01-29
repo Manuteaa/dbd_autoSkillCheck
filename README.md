@@ -46,9 +46,9 @@ You can run the code:
 Use the standalone app if you don't want to install anything, but just run the AI script.
 
 1) Go to the [releases page](https://github.com/Manuteaa/dbd_autoSkillCheck/releases)
-2) Download dbd_autoSkillCheck.zip
+2) Download `dbd_autoSkillCheck.zip`
 3) Unzip the file
-4) Run dbd_autoSkillCheck.exe
+4) Run `run_monitoring_gradio.exe`
 5) A console will open (ignore the file not found INFO message), ctrl+click on the link http://127.0.0.1:7860 to open the local web app
 6) Run the AI model on the web app, then you can play the game
 7) Learn how to use the script in the [Auto skill-check Web UI instructions](#auto-skill-check-web-ui).
