@@ -59,7 +59,7 @@ I have only tested the model on my own computer running Windows 11 with CUDA ver
 
 Create your own python env (I have python 3.11) and install the necessary libraries using the command :
 
-`pip install numpy mss onnxruntime-gpu pyautogui IPython pillow gradio`
+`pip install numpy mss onnxruntime-gpu pyautogui IPython pillow gradio torch`
 
 Then git clone the repo and follow the [Auto skill-check Web UI instructions](#auto-skill-check-web-ui).
 
@@ -194,6 +194,9 @@ How to run the AI model with your GPU ?
 - Install CUDNN 9.x (I have 9.4)
 - Install last version of MSVC
 - Select "GPU" in the Auto skill check webUI, click "RUN" and check if you have a warning message
+
+What about AMD GPUs/GPUs without CUDA?
+- Install onnxruntime DirectML with `pip install onnxruntime-directml` which allows you to run CUDA operations without NVIDIA GPUs. Ensure to uninstall the old onnxruntime-gpu  by `pip uninstall onnxruntime-gpu`
 
 Why does the script do nothing ?
 - Check if the AI model monitors correctly your game: set the debug option of the webui to "display the monitored frame". Play the game and check if it displays correctly the skill check
