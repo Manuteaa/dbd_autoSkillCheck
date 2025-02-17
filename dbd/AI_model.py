@@ -1,7 +1,7 @@
 import numpy as np
 from PIL import Image
 from mss import mss
-from onnxruntime import InferenceSession, SessionOptions, ExecutionMode, GraphOptimizationLevel
+from onnxruntime import InferenceSession, SessionOptions, ExecutionMode, GraphOptimizationLevel, get_available_providers
 from pyautogui import size as pyautogui_size
 
 
@@ -42,9 +42,11 @@ class AI_model:
         sess_options = SessionOptions()
 
         if use_gpu:
-            import torch  # Required to load cudnn, even if torch will not be directly used
-            execution_providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
-
+            available_providers = get_available_providers()
+            preferred_execution_providers = ['CUDAExecutionProvider', 'DmlExecutionProvider', 'CPUExecutionProvider']
+            execution_providers = [p for p in preferred_execution_providers if p in available_providers]
+            if execution_providers[0] == "CUDAExecutionProvider":
+                import torch # Required to load cudnn, even if torch will not be directly used
         else:
             execution_providers = ['CPUExecutionProvider']
 
@@ -60,10 +62,9 @@ class AI_model:
         self.mss = mss()
         self.monitor = get_monitor_attributes()
 
-    def is_using_cuda(self):
+    def check_provider(self):
         active_providers = self.ort_session.get_providers()
-        is_using_cuda = "CUDAExecutionProvider" in active_providers
-        return is_using_cuda
+        return active_providers[0]
 
     def grab_screenshot(self):
         screenshot = self.mss.grab(self.monitor)

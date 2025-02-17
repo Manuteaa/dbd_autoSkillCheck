@@ -34,9 +34,11 @@ def monitor(onnx_ai_model, device, debug_option, hit_ante, cpu_stress):
     use_gpu = (device == devices[1])
     ai_model = AI_model(onnx_ai_model, use_gpu, nb_cpu_threads)
 
-    is_using_cuda = ai_model.is_using_cuda()
-    if is_using_cuda:
-        Info("Running AI model on GPU (success)")
+    execution_provider = ai_model.check_provider()
+    if execution_provider == "CUDAExecutionProvider":
+            Info("Running AI model on GPU (success, CUDA)")
+    elif execution_provider == "DmlExecutionProvider":
+            Info("Running AI model on GPU (success, DirectML)")
     else:
         Info("Running AI model on CPU")
         if device == devices[1]:
