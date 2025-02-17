@@ -196,9 +196,8 @@ How to run the AI model with your GPU (NVIDIA - CUDA)?
 - Select "GPU" in the Auto skill check webUI, click "RUN" and check if you have a warning message
 
 What about AMD GPUs/GPUs without CUDA?
-- Uninstall onnxruntime-gpu  by running `pip uninstall onnxruntime-gpu`
+- Uninstall onnxruntime-gpu by running `pip uninstall onnxruntime-gpu`
 - Install onnxruntime DirectML with `pip install onnxruntime-directml` which allows you to run CUDA operations without NVIDIA GPUs
-- Install torch with directml support
 
 Why does the script do nothing ?
 - Check if the AI model monitors correctly your game: set the debug option of the webui to "display the monitored frame". Play the game and check if it displays correctly the skill check
