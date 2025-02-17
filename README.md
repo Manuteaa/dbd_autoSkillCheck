@@ -57,9 +57,9 @@ Use the standalone app if you don't want to install anything, but just run the A
 
 I have only tested the model on my own computer running Windows 11 with CUDA version 12.3. I provide two different scripts you can run.
 
-Create your own python env (I have python 3.11) and install the necessary libraries using the command :
+Create your own python env (I have python 3.11) and install the minimal necessary libraries using the command :
 
-`pip install numpy mss onnxruntime-gpu pyautogui IPython pillow gradio torch`
+`pip install numpy mss onnxruntime-gpu pyautogui IPython pillow gradio`
 
 Then git clone the repo and follow the [Auto skill-check Web UI instructions](#auto-skill-check-web-ui).
 
@@ -186,8 +186,8 @@ In conclusion, our model achieves high accuracy thanks to the high-quality datas
 
 # FAQ
 
-How to run the AI model with your GPU ?
-- Check if you have `pip install onnxruntime-gpu` and not onnxruntime (if not, uninstall onnxruntime before installing onnxruntime-gpu)
+How to run the AI model with your GPU (NVIDIA - CUDA)?
+- Check if you have `pip install onnxruntime-gpu` and not `onnxruntime` (if not, uninstall onnxruntime before installing onnxruntime-gpu)
 - Check onnxruntime-gpu version compatibilities with CUDA, CUDNN and torch https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html#requirements
 - Install CUDA 12.x (I have 12.3)
 - Install torch with CUDA compute (I have 2.4.0 with cuda 12.1 compute platform) https://pytorch.org/get-started/locally/
@@ -196,7 +196,9 @@ How to run the AI model with your GPU ?
 - Select "GPU" in the Auto skill check webUI, click "RUN" and check if you have a warning message
 
 What about AMD GPUs/GPUs without CUDA?
-- Install onnxruntime DirectML with `pip install onnxruntime-directml` which allows you to run CUDA operations without NVIDIA GPUs. Ensure to uninstall the old onnxruntime-gpu  by `pip uninstall onnxruntime-gpu`
+- Uninstall onnxruntime-gpu  by running `pip uninstall onnxruntime-gpu`
+- Install onnxruntime DirectML with `pip install onnxruntime-directml` which allows you to run CUDA operations without NVIDIA GPUs
+- Install torch with directml support
 
 Why does the script do nothing ?
 - Check if the AI model monitors correctly your game: set the debug option of the webui to "display the monitored frame". Play the game and check if it displays correctly the skill check
