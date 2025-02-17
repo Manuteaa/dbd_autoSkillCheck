@@ -42,10 +42,11 @@ class AI_model:
         sess_options = SessionOptions()
 
         if use_gpu:
-            import torch  # Required to load cudnn, even if torch will not be directly used
             available_providers = get_available_providers()
             preferred_execution_providers = ['CUDAExecutionProvider', 'DmlExecutionProvider', 'CPUExecutionProvider']
             execution_providers = [p for p in preferred_execution_providers if p in available_providers]
+            if execution_providers[0] == "CUDAExecutionProvider":
+                import torch # Required to load cudnn, even if torch will not be directly used
         else:
             execution_providers = ['CPUExecutionProvider']
 
