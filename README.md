@@ -1,12 +1,18 @@
+# Disclaimer
+
+**This project is intended for research and educational purposes in the field of deep learning and how computer vision AI can help in video games.**
+
+Using it may violate game rules and trigger anti-cheat detection. The author is not responsible for any consequences resulting from its use, this includes bans or any other unspecified violations. Use at your own risk.
+
 # DBD Auto Skill Check
 
 The Dead by Daylight Auto Skill Check is a tool developed using AI (deep learning with PyTorch) to automatically detect and successfully hit skill checks in the popular game Dead by Daylight. 
-This tool is designed to improve gameplay performance and enhance the player's skill in the game. 
+This tool is designed to demonstrate how AI can improve gameplay performance and enhance the player's skill in the game. 
 
 
-| In-game demo (x2 speed)         |
-|---------------------------------|
-| ![demo](images/demo.gif "demo") |
+| Demo (x2 speed) (in a private game to respect game rules) |
+|--------------------------------------------------------------------|
+| ![demo](images/demo.gif "demo")                                    |
 
 
 <!-- TOC -->
@@ -229,8 +235,7 @@ Does the script work well for skill checks in random locations (doctor skill che
 - Unfortunately, the script only monitors a small part of the center of your screen. It can not see the skill checks outside this area. Even if you make it work by editing the code (like capturing the whole screen and resize the frames to 224x224) the AI model was not trained to handle these special skill checks, so it will not work very well...
 
 What about the anti-cheat system ?
-- The script monitors a small crop of your main screen, and can press then release the space bar using [Windows MSDN](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes?redirectedfrom=MSDN) once each 0.5s maximum. I don't know if this can be detected as a cheat
-- I played the game quite a lot with the script on, and never had any problem so far...
+- The script monitors a small crop of your main screen, runs an onnx model, and can press then release the space bar using [Windows MSDN](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes?redirectedfrom=MSDN) once each 0.5s maximum. Such win32 `SendInput` injection key CAN be considered as a cheat for some AC systems. That's why this script should only be used in private games.
 
 # Acknowledgments
 
