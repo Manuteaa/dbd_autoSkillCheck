@@ -241,7 +241,7 @@ What about the anti-cheat system ?
 
 The project was made and is maintained by me ([Manuteaa](https://github.com/Manuteaa)). If you enjoy this project, consider giving it a ⭐! Starring the repository helps others discover it, and shows support for the work put into it. Your stars motivate me to add new features and address any bugs.
 
-Feel free to open a new issue for any question, suggestion or issue. You can also join the [discord server](https://discord.gg/DPVDWz9xeF) where we address some questions, provide additional guides and where you can find other players !
+Feel free to open a new issue for any question, suggestion or issue. You can also join the [discord server](https://discord.gg/3mewehHHpZ) where we address some questions, provide additional guides and where you can find other players !
 
 - A big thanks to [hemlock12](https://github.com/hemlock12) for the data collection help !
 - Thanks to [SouthernFrenzy](https://github.com/SouthernFrenzy) for the help and time to manage the discord server
