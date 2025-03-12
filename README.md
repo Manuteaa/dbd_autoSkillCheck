@@ -10,9 +10,9 @@ The Dead by Daylight Auto Skill Check is a tool developed using AI (deep learnin
 This tool is designed to demonstrate how AI can improve gameplay performance and enhance the player's skill in the game. 
 
 
-| Demo (x2 speed) (in a private game to respect game rules) |
-|--------------------------------------------------------------------|
-| ![demo](images/demo.gif "demo")                                    |
+| Demo (x2 speed) |
+|-------------------------------------------------------------------|
+| ![demo](images/demo.gif "demo")                                   |
 
 
 <!-- TOC -->
@@ -192,7 +192,10 @@ In conclusion, our model achieves high accuracy thanks to the high-quality datas
 
 # FAQ
 
-How to run the AI model with your GPU (NVIDIA - CUDA)?
+**What about the anti-cheat system ?**
+- The script monitors a small crop of your main screen, processes it using an onnx model, and can press then release the space bar using [Windows MSDN](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes?redirectedfrom=MSDN) once each 0.5s maximum. This win32 `SendInput` injection key can be considered as an "unfair advantage" by EAC, potentially leading to a ban. For this reason, the script should only be used in private games. However, if you still wish to use it in public matches, you can join the Discord server for more details. These specifics will not be shared publicly.
+
+**How to run the AI model with your GPU (NVIDIA - CUDA)?**
 - Check if you have `pip install onnxruntime-gpu` and not `onnxruntime` (if not, uninstall onnxruntime before installing onnxruntime-gpu)
 - Check onnxruntime-gpu version compatibilities with CUDA, CUDNN and torch https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html#requirements
 - Install CUDA 12.x (I have 12.3)
@@ -201,17 +204,17 @@ How to run the AI model with your GPU (NVIDIA - CUDA)?
 - Install last version of MSVC
 - Select "GPU" in the Auto skill check webUI, click "RUN" and check if you have a warning message
 
-What about AMD GPUs/GPUs without CUDA?
+**What about AMD GPUs/GPUs without CUDA?**
 - Uninstall onnxruntime-gpu by running `pip uninstall onnxruntime-gpu`
 - Install onnxruntime DirectML with `pip install onnxruntime-directml` which allows you to run CUDA operations without NVIDIA GPUs
 
-Why does the script do nothing ?
+**Why does the script do nothing ?**
 - Check if the AI model monitors correctly your game: set the debug option of the webui to "display the monitored frame". Play the game and check if it displays correctly the skill check
 - Check if you have no error in the python console logs
 - Use standard game settings (I recommend using 1080p at 100% resolution without any game filters, no vsync, no FSR): your displayed images "last hit skill check frame" should be similar with the ones in my examples
 - Check if you do not use a potato instead of a computer
 
-Why do I hit good skill checks instead of great ? Be sure :
+**Why do I hit good skill checks instead of great ? Be sure :**
 - Your game FPS >= 60
 - The AI model FPS >= 60
 - Your ping is not too high (<= 60 should be fine)
@@ -219,23 +222,20 @@ Why do I hit good skill checks instead of great ? Be sure :
 - In the `Features options` of the WebUI, decrease the `Ante-frontier hit delay` value
 
 
-I have lower values than 60 FPS for the AI model, what can I do ?
+**I have lower values than 60 FPS for the AI model, what can I do ?**
 - In the `Features options` of the WebUI, increase the `CPU workload` option to `normal` or `max`
 - Switch device to gpu
 - Disable the energy saver settings in your computer settings
 - Run the script in administrator mode
 
-Why does the AI model hit the skill check too early and fail ?
+**Why does the AI model hit the skill check too early and fail ?**
 - In the `Features options` of the WebUI, increase the `Ante-frontier hit delay` value
 
-Does the script work well with the perk hyperfocus ?
+**Does the script work well with the perk hyperfocus ?**
 - Yes
 
-Does the script work well for skill checks in random locations (doctor skill checks) ?
+**Does the script work well for skill checks in random locations (doctor skill checks) ?**
 - Unfortunately, the script only monitors a small part of the center of your screen. It can not see the skill checks outside this area. Even if you make it work by editing the code (like capturing the whole screen and resize the frames to 224x224) the AI model was not trained to handle these special skill checks, so it will not work very well...
-
-What about the anti-cheat system ?
-- The script monitors a small crop of your main screen, runs an onnx model, and can press then release the space bar using [Windows MSDN](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes?redirectedfrom=MSDN) once each 0.5s maximum. Such win32 `SendInput` injection key CAN be considered as a cheat for some AC systems. That's why this script should only be used in private games.
 
 # Acknowledgments
 
@@ -245,5 +245,5 @@ Feel free to open a new issue for any question, suggestion or issue. You can als
 
 - A big thanks to [hemlock12](https://github.com/hemlock12) for the data collection help !
 - Thanks to [SouthernFrenzy](https://github.com/SouthernFrenzy) for the help and time to manage the discord server
-- Thanks [KevinSade](https://github.com/KevinSade) for the guides and contribution to the discord server
+- Thanks [KevinSade](https://github.com/KevinSade) for the contribution to the discord server
 
