@@ -38,14 +38,16 @@ class AI_model:
             execution_providers = ['CPUExecutionProvider']
 
             if nb_cpu_threads is not None:
+                # Reduce CPU overhead
                 sess_options.intra_op_num_threads = nb_cpu_threads
                 sess_options.inter_op_num_threads = nb_cpu_threads
 
+        # Trained model
         self.ort_session = InferenceSession(onnx_filepath, providers=execution_providers, sess_options=sess_options)
         self.input_name = self.ort_session.get_inputs()[0].name
 
         self.mss = mss()
-
+    
     def check_provider(self):
         active_providers = self.ort_session.get_providers()
         return active_providers[0]
