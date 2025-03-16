@@ -65,7 +65,7 @@ I have only tested the model on my own computer running Windows 11 with CUDA ver
 
 Create your own python env (I have python 3.11) and install the minimal necessary libraries using the command :
 
-`pip install numpy mss onnxruntime-gpu pyautogui IPython pillow gradio`
+`pip install numpy mss onnxruntime-gpu pyautogui IPython pillow gradio pywin32 psutil`
 
 Then git clone the repo and follow the [Auto skill-check Web UI instructions](#auto-skill-check-web-ui).
 

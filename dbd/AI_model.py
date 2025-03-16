@@ -2,20 +2,7 @@ import numpy as np
 from PIL import Image
 from mss import mss
 from onnxruntime import InferenceSession, SessionOptions, ExecutionMode, GraphOptimizationLevel, get_available_providers
-from pyautogui import size as pyautogui_size
-
-
-def get_monitor_attributes():
-    width, height = pyautogui_size()
-    object_size_h_ratio = 224 / 1080
-    object_size = int(object_size_h_ratio * height)
-
-    monitor = {"top": height // 2 - object_size // 2,
-               "left": width // 2 - object_size // 2,
-               "width": object_size,
-               "height": object_size}
-
-    return monitor
+from dbd.utils.frame_grabber import get_monitor_attributes
 
 
 class AI_model:
@@ -51,23 +38,21 @@ class AI_model:
             execution_providers = ['CPUExecutionProvider']
 
             if nb_cpu_threads is not None:
-                # Reduce CPU overhead
                 sess_options.intra_op_num_threads = nb_cpu_threads
                 sess_options.inter_op_num_threads = nb_cpu_threads
 
-        # Trained model
         self.ort_session = InferenceSession(onnx_filepath, providers=execution_providers, sess_options=sess_options)
         self.input_name = self.ort_session.get_inputs()[0].name
 
         self.mss = mss()
-        self.monitor = get_monitor_attributes()
 
     def check_provider(self):
         active_providers = self.ort_session.get_providers()
         return active_providers[0]
 
     def grab_screenshot(self):
-        screenshot = self.mss.grab(self.monitor)
+        monitor = get_monitor_attributes()
+        screenshot = self.mss.grab(monitor)
         return screenshot
 
     def screenshot_to_pil(self, screenshot):
