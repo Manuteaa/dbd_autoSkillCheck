@@ -7,9 +7,6 @@ import tensorrt as trt
 from pyautogui import size as pyautogui_size
 
 
-# PyTorch to initialize CUDA first to prevent context switching issues
-torch.tensor([0.0], dtype=torch.float32, device="cuda")
-
 def get_monitor_attributes():
     width, height = pyautogui_size()
     object_size_h_ratio = 224 / 1080
