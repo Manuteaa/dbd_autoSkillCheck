@@ -8,7 +8,7 @@ from pyautogui import size as pyautogui_size
 
 
 # PyTorch to initialize CUDA first to prevent context switching issues
-torch.tensor([0.0], dtype=torch.float16, device="cuda")
+torch.tensor([0.0], dtype=torch.get_float32_matmul_precision, device="cuda")
 
 def get_monitor_attributes():
     width, height = pyautogui_size()
