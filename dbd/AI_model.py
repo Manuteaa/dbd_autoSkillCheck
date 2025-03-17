@@ -56,8 +56,10 @@ class AI_model:
         return self.mss.grab(self.monitor)
 
     def screenshot_to_pil(self, screenshot):
-        pil_image = Image.frombytes("RGB", screenshot.size, screenshot.rgb)
-        return pil_image.resize((224, 224), Image.Resampling.LANCZOS)
+        pil_image = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
+        if pil_image.width != 224 or pil_image.height != 224:
+            pil_image = pil_image.resize((224, 224), Image.Resampling.LANCZOS)
+        return pil_image
     
     def pil_to_numpy(self, image_pil):
         img = np.asarray(image_pil, dtype=np.float32) / 255.0
