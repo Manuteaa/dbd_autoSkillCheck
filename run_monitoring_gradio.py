@@ -1,9 +1,18 @@
 import os
 from pathlib import Path
 from time import time, sleep
-
 from dbd.AI_model import AI_model
+import onnxruntime as ort
 from dbd.utils.directkeys import PressKey, ReleaseKey, SPACE
+
+# Check if TensorRT is available
+try:
+    import tensorrt as trt
+    import pycuda.driver as cuda
+    import pycuda.autoinit
+    TRT_AVAILABLE = True
+except ImportError:
+    TRT_AVAILABLE = False
 
 from gradio import (
     Dropdown, Radio, Number, Image, Label, Button, Slider,
@@ -11,9 +20,9 @@ from gradio import (
 )
 
 
-def monitor(onnx_ai_model, device, debug_option, hit_ante, cpu_stress):
-    if onnx_ai_model is None or not os.path.exists(onnx_ai_model) or ".onnx" not in onnx_ai_model:
-        raise Error("Invalid onnx file", duration=0)
+def monitor(ai_model_path, device, debug_option, hit_ante, cpu_stress):
+    if ai_model_path is None or not os.path.exists(ai_model_path):
+        raise Error("Invalid AI model file", duration=0)
 
     if device is None:
         raise Error("Invalid device option")
@@ -30,15 +39,19 @@ def monitor(onnx_ai_model, device, debug_option, hit_ante, cpu_stress):
     else:
         nb_cpu_threads = None
 
-    # AI model
     use_gpu = (device == devices[1])
-    ai_model = AI_model(onnx_ai_model, use_gpu, nb_cpu_threads)
+
+    ai_model = AI_model(ai_model_path, use_gpu, nb_cpu_threads)
 
     execution_provider = ai_model.check_provider()
+
+
     if execution_provider == "CUDAExecutionProvider":
-            Info("Running AI model on GPU (success, CUDA)")
+        Info("Running AI model on GPU (success, CUDA)")
     elif execution_provider == "DmlExecutionProvider":
-            Info("Running AI model on GPU (success, DirectML)")
+        Info("Running AI model on GPU (success, DirectML)")
+    elif execution_provider == "TensorRT":
+        Info("Running AI model using TensorRT Engine")
     else:
         Info("Running AI model on CPU")
         if device == devices[1]:
@@ -69,7 +82,6 @@ def monitor(onnx_ai_model, device, debug_option, hit_ante, cpu_stress):
             nb_hits += 1
 
         if should_hit:
-
             # ante-frontier hit delay
             if pred == 2 and hit_ante > 0:
                 sleep(hit_ante * 0.001)
@@ -108,13 +120,20 @@ def monitor(onnx_ai_model, device, debug_option, hit_ante, cpu_stress):
 if __name__ == "__main__":
     debug_folder = "saved_images"
 
-    debug_options = ["None (default)",
-                     "Display the monitored frame (a 224x224 center-cropped image, displayed at 1fps) instead of last hit skill check frame. Useful to check the monitored screen",
-                     "Save hit skill check frames in {}/".format(debug_folder),
-                     "Save all skill check frames in {}/ (will impact fps)".format(debug_folder)]
+    debug_options = [
+        "None (default)",
+        "Display the monitored frame (a 224x224 center-cropped image, displayed at 1fps) instead of last hit skill check frame. Useful to check the monitored screen",
+        "Save hit skill check frames in {}/".format(debug_folder),
+        "Save all skill check frames in {}/ (will impact fps)".format(debug_folder)
+    ]
 
     fps_info = "Number of frames per second the AI model analyses the monitored frame. Check The GitHub FAQ for more details and requirements."
     devices = ["CPU (default)", "GPU"]
+
+    # Find available AI models
+    model_files = [f for f in os.listdir() if f.endswith(".onnx") or f.endswith(".engine")]
+    if not model_files:
+        model_files = ["model.onnx"]  # Default if no models found
 
     with (Blocks(title="DBD Auto skill check") as webui):
         Markdown("<h1 style='text-align: center;'>DBD Auto skill check</h1>", elem_id="title")
@@ -124,15 +143,23 @@ if __name__ == "__main__":
             with Column(variant="panel"):
                 with Column(variant="panel"):
                     Markdown("AI inference settings")
-                    onnx_ai_model = Dropdown(choices=["model.onnx"], value="model.onnx", label="Filepath of the ONNX model (trained AI model)")
-                    device = Radio(choices=devices, value=devices[0], label="Device the AI onnx model will use")
+                    ai_model_path = Dropdown(
+                        choices=model_files,  # Show both ONNX and TensorRT models
+                        value=model_files[0],  # Default to first detected model
+                        label="Filepath of the AI model (ONNX or TensorRT Engine)"
+                    )
+                    device = Radio(choices=devices, value=devices[0], label="Device the AI model will use")
                 with Column(variant="panel"):
                     Markdown("Debug options - for debugging or analytics")
                     debug_option = Dropdown(choices=debug_options, value=debug_options[0], label="Debugging selection")
                 with Column(variant="panel"):
                     Markdown("Features options")
                     hit_ante = Slider(minimum=0, maximum=50, step=5, value=20, label="Ante-frontier hit delay in ms")
-                    cpu_stress = Radio(label="CPU workload for AI model inference (increase to improve AI model FPS or decrease to reduce CPU stress)", choices=["min", "low", "normal", "max"], value="low")
+                    cpu_stress = Radio(
+                        label="CPU workload for AI model inference (increase to improve AI model FPS or decrease to reduce CPU stress)",
+                        choices=["min", "low", "normal", "max"],
+                        value="low"
+                    )
                 with Column():
                     run_button = Button("RUN", variant="primary")
                     stop_button = Button("STOP", variant="stop")
@@ -142,7 +169,11 @@ if __name__ == "__main__":
                 image_pil = Image(label="Last hit skill check frame", height=224, interactive=False)
                 probs = Label(label="Skill check recognition")
 
-        monitoring = run_button.click(fn=monitor, inputs=[onnx_ai_model, device, debug_option, hit_ante, cpu_stress], outputs=[fps, image_pil, probs])
+        monitoring = run_button.click(
+            fn=monitor, 
+            inputs=[ai_model_path, device, debug_option, hit_ante, cpu_stress], 
+            outputs=[fps, image_pil, probs]
+        )
         stop_button.click(fn=None, inputs=None, outputs=None, cancels=[monitoring])
 
     webui.launch()
