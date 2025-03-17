@@ -143,7 +143,13 @@ class AI_model:
 
             self.context.execute_v2(bindings=self.bindings)
 
-            np.copyto(self.outputs[0]['host'], self.outputs[0]['device'].cpu().numpy())
+            stream = torch.cuda.Stream()
+            with torch.cuda.stream(stream): 
+               output_tensor = self.outputs[0]['device'].to("cpu", non_blocking=True)
+
+            torch.cuda.current_stream().wait_stream(stream)
+
+            self.outputs[0]['host'][:] = output_tensor.numpy()
 
             torch.cuda.synchronize()
             logits = np.squeeze(self.outputs[0]['host'])
