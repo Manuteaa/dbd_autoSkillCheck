@@ -83,7 +83,10 @@ class AI_model:
         self.ort_session = ort.InferenceSession(
             self.model_path, providers=execution_providers, sess_options=sess_options
         )
+
+        # Get input tensor name and expected dtype
         self.input_name = self.ort_session.get_inputs()[0].name
+        self.input_dtype = self.ort_session.get_inputs()[0].type  # Get model input type
         self.is_tensorrt = False
 
     def load_tensorrt(self):
@@ -145,7 +148,7 @@ class AI_model:
 
             stream = torch.cuda.Stream()
             with torch.cuda.stream(stream): 
-               output_tensor = self.outputs[0]['device'].to("cpu", non_blocking=True)
+                output_tensor = self.outputs[0]['device'].to("cpu", non_blocking=True)
 
             torch.cuda.current_stream().wait_stream(stream)
 
@@ -154,6 +157,12 @@ class AI_model:
             torch.cuda.synchronize()
             logits = np.squeeze(self.outputs[0]['host'])
         else:
+            # 🔹 Auto-convert ONNX input type to match model expectation
+            if self.input_dtype == "tensor(float)":
+                img_np = img_np.astype(np.float32)
+            elif self.input_dtype == "tensor(float16)":
+                img_np = img_np.astype(np.float16)
+
             ort_inputs = {self.input_name: img_np}
             logits = np.squeeze(self.ort_session.run(None, ort_inputs))
 
