@@ -2,9 +2,15 @@ import numpy as np
 from PIL import Image
 from mss import mss
 import onnxruntime as ort
-import torch
-import tensorrt as trt
+import atexit
 from pyautogui import size as pyautogui_size
+
+try:
+    import torch
+    import tensorrt as trt
+except ImportError:
+    pass
+
 
 
 def get_monitor_attributes():
@@ -37,17 +43,28 @@ class AI_model:
         10: {"desc": "wiggle (out)", "hit": False}
     }
 
-    def __init__(self, model_path="model.onnx", use_gpu=True, nb_cpu_threads=None):
+    def __init__(self, model_path="model.onnx", use_gpu=False, nb_cpu_threads=None):
         self.model_path = model_path
         self.use_gpu = use_gpu
         self.nb_cpu_threads = nb_cpu_threads
         self.mss = mss()
         self.monitor = get_monitor_attributes()
 
+        self.context = None
+        self.engine = None
+
         if model_path.endswith(".engine"):
             self.load_tensorrt()
         else:
             self.load_onnx()
+
+        atexit.register(self.cleanup)
+
+    def cleanup(self):
+        if self.is_tensorrt:
+            del self.context
+            del self.engine
+            torch.cuda.empty_cache()
 
     def grab_screenshot(self):
         return self.mss.grab(self.monitor)
@@ -57,13 +74,13 @@ class AI_model:
         if pil_image.width != 224 or pil_image.height != 224:
             pil_image = pil_image.resize((224, 224), Image.Resampling.LANCZOS)
         return pil_image
-    
+
     def pil_to_numpy(self, image_pil):
         img = np.asarray(image_pil, dtype=np.float32) / 255.0
         img = np.transpose(img, (2, 0, 1))
         img = (img - self.MEAN[:, None, None]) / self.STD[:, None, None]
         return np.expand_dims(img, axis=0)
-    
+
     def softmax(self, x):
         exp_x = np.exp(x - np.max(x))
         return exp_x / np.sum(exp_x)
@@ -84,9 +101,8 @@ class AI_model:
             self.model_path, providers=execution_providers, sess_options=sess_options
         )
 
-        # Get input tensor name and expected dtype
         self.input_name = self.ort_session.get_inputs()[0].name
-        self.input_dtype = self.ort_session.get_inputs()[0].type  # Get model input type
+        self.input_dtype = self.ort_session.get_inputs()[0].type
         self.is_tensorrt = False
 
     def load_tensorrt(self):
@@ -128,7 +144,7 @@ class AI_model:
                 outputs.append(tensor_info)
 
         return inputs, outputs, bindings
-    
+
     def predict(self, image):
         if isinstance(image, np.ndarray):
             img_np = image
@@ -157,7 +173,6 @@ class AI_model:
             torch.cuda.synchronize()
             logits = np.squeeze(self.outputs[0]['host'])
         else:
-            # 🔹 Auto-convert ONNX input type to match model expectation
             if self.input_dtype == "tensor(float)":
                 img_np = img_np.astype(np.float32)
             elif self.input_dtype == "tensor(float16)":
