@@ -51,6 +51,8 @@ You can run the code:
 
 Use the standalone app if you don't want to install anything, but just run the AI script.
 
+_Warning_: Some players reported that the standalone app can cause EAC suspicious / ban, even in private games. That's why I recommend the [Build from source method](#build-from-source), which is much safer to use. More details are available on the Discord server.
+
 1) Go to the [releases page](https://github.com/Manuteaa/dbd_autoSkillCheck/releases)
 2) Download `dbd_autoSkillCheck.zip`
 3) Unzip the file
