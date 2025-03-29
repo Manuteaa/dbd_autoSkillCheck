@@ -1,7 +1,4 @@
 import tensorrt as trt
-import onnx
-import time
-from tqdm import tqdm
 
 onnx_model_path = "model.onnx"
 engine_file = "model_fp32.engine"
