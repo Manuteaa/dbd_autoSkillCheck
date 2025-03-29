@@ -2,17 +2,7 @@ import os
 from pathlib import Path
 from time import time, sleep
 from dbd.AI_model import AI_model
-import onnxruntime as ort
 from dbd.utils.directkeys import PressKey, ReleaseKey, SPACE
-
-# Check if TensorRT is available
-try:
-    import tensorrt as trt
-    import pycuda.driver as cuda
-    import pycuda.autoinit
-    TRT_AVAILABLE = True
-except ImportError:
-    TRT_AVAILABLE = False
 
 from gradio import (
     Dropdown, Radio, Number, Image, Label, Button, Slider,
