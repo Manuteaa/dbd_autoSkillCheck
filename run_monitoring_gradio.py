@@ -29,12 +29,12 @@ def monitor(ai_model_path, device, debug_option, hit_ante, cpu_stress):
     else:
         nb_cpu_threads = None
 
-    use_gpu = (device == devices[1])
-
-    ai_model = AI_model(ai_model_path, use_gpu, nb_cpu_threads)
-
-    execution_provider = ai_model.check_provider()
-
+    try:
+        use_gpu = (device == devices[1])
+        ai_model = AI_model(ai_model_path, use_gpu, nb_cpu_threads)
+        execution_provider = ai_model.check_provider()
+    except Exception as e:
+        raise Error("Error when loading AI model: {}".format(e), duration=0)
 
     if execution_provider == "CUDAExecutionProvider":
         Info("Running AI model on GPU (success, CUDA)")
@@ -44,7 +44,7 @@ def monitor(ai_model_path, device, debug_option, hit_ante, cpu_stress):
         Info("Running AI model using TensorRT Engine")
     else:
         Info("Running AI model on CPU")
-        if device == devices[1]:
+        if use_gpu:
             Warning("Could not run AI model on GPU device. Check python console logs to debug.")
 
     # Create debug folders

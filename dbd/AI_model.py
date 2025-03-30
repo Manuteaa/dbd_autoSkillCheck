@@ -3,14 +3,14 @@ from PIL import Image
 from mss import mss
 import onnxruntime as ort
 import atexit
+import sys
 from pyautogui import size as pyautogui_size
 
 try:
     import torch
     import tensorrt as trt
-except ImportError:
-    pass
-
+except ImportError as e:
+    print(e)
 
 
 def get_monitor_attributes():
@@ -54,6 +54,9 @@ class AI_model:
         self.engine = None
 
         if model_path.endswith(".engine"):
+            assert self.use_gpu, "TensorRT engine model requires GPU mode"
+            assert "torch" in sys.modules, "TensorRT engine model requires torch lib"
+            assert "tensorrt" in sys.modules, "TensorRT engine model requires tensorrt lib"
             self.load_tensorrt()
         else:
             self.load_onnx()
