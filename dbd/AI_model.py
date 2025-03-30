@@ -95,10 +95,13 @@ class AI_model:
             sess_options.intra_op_num_threads = self.nb_cpu_threads
             sess_options.inter_op_num_threads = self.nb_cpu_threads
 
-        execution_providers = ["CPUExecutionProvider"]
-
-        if self.use_gpu and "CUDAExecutionProvider" in ort.get_available_providers():
-            execution_providers.insert(0, "CUDAExecutionProvider")
+        if self.use_gpu:
+            assert "torch" in sys.modules, "GPU mode requires torch lib"
+            available_providers = ort.get_available_providers()
+            preferred_execution_providers = ['CUDAExecutionProvider', 'DmlExecutionProvider', 'CPUExecutionProvider']
+            execution_providers = [p for p in preferred_execution_providers if p in available_providers]
+        else:
+            execution_providers = ["CPUExecutionProvider"]
 
         self.ort_session = ort.InferenceSession(
             self.model_path, providers=execution_providers, sess_options=sess_options
