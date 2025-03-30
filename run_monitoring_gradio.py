@@ -41,9 +41,9 @@ def monitor(ai_model_path, device, debug_option, hit_ante, cpu_stress):
     elif execution_provider == "DmlExecutionProvider":
         Info("Running AI model on GPU (success, DirectML)")
     elif execution_provider == "TensorRT":
-        Info("Running AI model using TensorRT Engine")
+        Info("Running AI model on GPU (success, TensorRT)")
     else:
-        Info("Running AI model on CPU")
+        Info(f"Running AI model on CPU (success, {nb_cpu_threads} threads)")
         if use_gpu:
             Warning("Could not run AI model on GPU device. Check python console logs to debug.")
 
