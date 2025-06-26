@@ -1,3 +1,15 @@
+---
+title: Dbd AutoSkillCheck
+emoji: 📉
+colorFrom: indigo
+colorTo: pink
+sdk: gradio
+sdk_version: 5.34.2
+app_file: app.py
+pinned: false
+short_description: An AI tool to hit great skill checks in Dead By Daylight
+---
+
 # Disclaimer
 
 **This project is intended for research and educational purposes in the field of deep learning and how computer vision AI can help in video games.**
