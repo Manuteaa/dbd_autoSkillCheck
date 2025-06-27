@@ -1,25 +1,13 @@
----
-title: Dbd AutoSkillCheck
-emoji: 📉
-colorFrom: indigo
-colorTo: pink
-sdk: gradio
-sdk_version: 5.34.2
-app_file: app.py
-pinned: false
-short_description: An AI tool to hit great skill checks in Dead By Daylight
----
-
 # Disclaimer
 
 **This project is intended for research and educational purposes in the field of deep learning and how computer vision AI can help in video games.**
 
-Using it may violate game rules and trigger anti-cheat detection. The author is not responsible for any consequences resulting from its use, this includes bans or any other unspecified violations. Use at your own risk. Join the discord server for more info.
+Using it may violate game rules and trigger anti-cheat detection. The author is not responsible for any consequences resulting from its use, this includes bans or any other unspecified violations. Use at your own risk. Join the [discord server](#acknowledgments) for more info.
 
 # DBD Auto Skill Check
 
 The Dead by Daylight Auto Skill Check is a tool developed using AI (deep learning with PyTorch) to automatically detect and successfully hit skill checks in the popular game Dead by Daylight. 
-This tool is designed to demonstrate how AI can improve gameplay performance and enhance the player's skill in the game. 
+This tool is designed to demonstrate how AI can improve gameplay performance and enhance the player's success rate in the game. 
 
 
 | Demo (x2 speed) |
@@ -28,11 +16,14 @@ This tool is designed to demonstrate how AI can improve gameplay performance and
 
 
 <!-- TOC -->
+* [Disclaimer](#disclaimer)
 * [DBD Auto Skill Check](#dbd-auto-skill-check)
 * [Features](#features)
 * [Execution Instructions](#execution-instructions)
-  * [Windows standalone app](#windows-standalone-app)
-  * [Build from source](#build-from-source)
+  * [Get the code](#get-the-code)
+    * [Python embedded app (recommended)](#python-embedded-app-recommended)
+    * [Build from source](#build-from-source)
+    * [Windows standalone app](#windows-standalone-app)
   * [Auto skill-check Web UI](#auto-skill-check-web-ui)
 * [Project details](#project-details)
   * [What is a skill check](#what-is-a-skill-check)
@@ -55,50 +46,61 @@ This tool is designed to demonstrate how AI can improve gameplay performance and
 
 # Execution Instructions
 
-You can run the code:
-- From the windows standalone app: just download the .exe file and run it (no install required)
-- From source: It's for you if you have some python knowledge, you want to customize the code or run it on GPU
+## Get the code
 
-## Windows standalone app
+You can get and run the code:
+- [From the python embedded app](#python-embedded-app-recommended): Recommended and easiest way to run the AI model without installing anything.
+- [From source](#build-from-source): Recommended if you want to customize the code or run it on GPU.
+- [From the windows standalone app](#windows-standalone-app): Download the .zip file, and run the .exe file (no install required). Will be deprecated in the future for security and safety reasons.
 
-Use the standalone app if you don't want to install anything, but just run the AI script.
 
-_Warning_: Some players reported that the standalone app can cause EAC suspicious / ban, even in private games. That's why I recommend the [Build from source method](#build-from-source), which is much safer to use. More details are available on the Discord server.
+### Python embedded app (recommended)
+
+Use this method if you want to run the AI model without installing anything. I recommend this method if you are not familiar with Python and you just want to run the AI model.
 
 1) Go to the [releases page](https://github.com/Manuteaa/dbd_autoSkillCheck/releases)
-2) Download `dbd_autoSkillCheck.zip`
+2) Download the source code (zip) containing the code
+3) Download `python-embed.zip` containing python and all the necessary libraries
+4) Unzip the source code and unzip `python-embed.zip`
+5) Move the unzipped folder `python-embed` into the unzipped source code folder. At this point, you should have the folder `python-embed` and the file `app.py` in the same root folder
+6) You're done! Run `run_app.bat` (double click) to start the AI model web UI
+7) Follow the [next instructions](#auto-skill-check-web-ui)
+
+
+### Build from source
+
+Use this method if you have some experience with Python and if you want to customize the code. This is also the only way to run the code using your GPU device (see [FAQ](#faq)).
+
+1) Create your own python env (for example using python 3.12) 
+2) Install the minimal necessary libraries using the command: `pip install numpy mss onnxruntime pyautogui IPython pillow gradio`
+3) git clone the repo or download the source code (zip)
+4) Run `python app.py` to start the AI model web UI
+5) Follow the [next instructions](#auto-skill-check-web-ui)
+
+### Windows standalone app
+
+_Warning_: Some players reported that the .exe can cause EAC suspicious / ban, even in private games. That's why I recommend the two other execution methods, which are much safer to use. More details are available on the [Discord server](#acknowledgments).
+
+1) Go to the [releases page](https://github.com/Manuteaa/dbd_autoSkillCheck/releases)
+2) Download `standalone.zip`
 3) Unzip the file
-4) Run `run_monitoring_gradio.exe`
-5) A console will open (ignore the file not found INFO message), ctrl+click on the link http://127.0.0.1:7860 to open the local web app
-6) Run the AI model on the web app, then you can play the game
-7) Learn how to use the script in the [Auto skill-check Web UI instructions](#auto-skill-check-web-ui).
+4) Run `app.exe` to start the AI model web UI
+5) Follow the [next instructions](#auto-skill-check-web-ui)
 
-## Build from source
-
-I have only tested the model on my own computer running Windows 11 with CUDA version 12.3. I provide two different scripts you can run.
-
-Create your own python env (I have python 3.11) and install the minimal necessary libraries using the command :
-
-`pip install numpy mss onnxruntime-gpu pyautogui IPython pillow gradio`
-
-Then git clone the repo and follow the [Auto skill-check Web UI instructions](#auto-skill-check-web-ui).
 
 ## Auto skill-check Web UI
 
-Run this script and play the game ! It will hit the space bar for you.
+After having started the AI model web UI, a console will open (ignore the file not found INFO message), ctrl+click on the [link displayed in the console](http://127.0.0.1:7860) to open the local web UI.
 
-- When building from source: `python run_monitoring_gradio.py`
-- When using the standalone app: run `run_monitoring_gradio.exe`
-
-1) Select the trained AI model (default to `model.onnx` available in this repo, and included within the standalone app)
-2) Select the device to use. Use default CPU device. GPU is not available with the standalone app. With python, follow the [FAQ](#faq) instructions if you want to use  GPU
+1) Select the trained AI model (default to `model.onnx` available in this repo)
+2) Select the device to use. Use default CPU device. GPU is only available using the [Build from source method](#build-from-source).
 3) Choose debug options. If you want to check which screen the script is monitoring, you can select the first option. If the AI struggles recognizing the skill checks, select the second option to save the results, then you can upload the images in a new GitHub issue
-4) Select additional features options. Keep the default values unless you have read the [FAQ](#faq) and know what you are doing
+4) Select additional features options (check the [FAQ](#faq) more for details)
 5) Click 'RUN'
-6) You can STOP and RUN the script from the Web UI at will, for example when waiting in the game lobby
+6) Run this and play the game ! It will hit the space bar for you.
+7) You can STOP and RUN the script from the Web UI at will, for example when waiting in the game lobby
 
-Your main screen is now monitored meaning that frames are regularly sampled (with a center-crop) and analysed locally with the trained AI model.
-You can play the game on your main monitor.
+Your main screen is now monitored meaning that frames are regularly sampled (with a center-crop) and analysed locally (on your computer) with the trained AI model. You can play the game on your main monitor.
 When a great skill check is detected, the SPACE key is automatically pressed, then it waits for 0.5s to avoid triggering the same skill check multiple times in a row.
 
 
@@ -112,8 +114,7 @@ On the right of the web UI, we display :
 - The last hit skill check frame : last frame (center-cropped image with size 224x224) the AI model triggered the SPACE bar. **This may not be the actual hit frame (as registered by the game) because of game latency (such as ping). The AI model anticipates the latency, and hits the space bar a little bit before the cursor reaches the great area, that's why the displayed frame will always be few frames before actual game hit frame**
 - Skill check recognition : set of probabilities for the frame displayed before
 
-**Both the game AND the AI model FPS must run at 60fps (or more) in order to hit correctly the great skill checks.** 
-I had the problem of low FPS with Windows : when the script was on the background (when I played), the FPS dropped significantly. Running the script in admin solved the problem (see the [FAQ](#faq)).
+**Both the game AND the AI model FPS must run at 60fps (or more) in order to hit correctly the great skill checks.**
 
 # Project details
 
@@ -210,10 +211,10 @@ In conclusion, our model achieves high accuracy thanks to the high-quality datas
 - The script monitors a small crop of your main screen, processes it using an onnx model, and can press then release the space bar using [Windows MSDN](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes?redirectedfrom=MSDN) once each 0.5s maximum. This win32 `SendInput` injection key can be considered as an "unfair advantage" by EAC, potentially leading to a ban. For this reason, the script should only be used in private games. However, if you still wish to use it in public matches, you can join the Discord server for more details. These specifics will not be shared publicly.
 
 **How to run the AI model with your GPU (NVIDIA - CUDA)?**
-- Check if you have `pip install onnxruntime-gpu` and not `onnxruntime` (if not, uninstall onnxruntime before installing onnxruntime-gpu)
+- Uninstall `onnxruntime` then install `onnxruntime-gpu`
 - Check onnxruntime-gpu version compatibilities with CUDA, CUDNN and torch https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html#requirements
 - Install CUDA 12.x (I have 12.3)
-- Install torch with CUDA compute (I have 2.4.0 with cuda 12.1 compute platform) https://pytorch.org/get-started/locally/
+- Install [torch](https://pytorch.org/get-started/locally/) with CUDA compute (I have 2.4.0 with cuda 12.1 compute platform)
 - Install CUDNN 9.x (I have 9.4)
 - Install last version of MSVC
 - Select "GPU" in the Auto skill check webUI, click "RUN" and check if you have a warning message
@@ -235,7 +236,6 @@ In conclusion, our model achieves high accuracy thanks to the high-quality datas
 - Use standard game settings (I recommend using 1080p at 100% resolution without any game filters, no vsync, no FSR)
 - In the `Features options` of the WebUI, decrease the `Ante-frontier hit delay` value
 
-
 **I have lower values than 60 FPS for the AI model, what can I do ?**
 - In the `Features options` of the WebUI, increase the `CPU workload` option to `normal` or `max`
 - Switch device to gpu
@@ -255,9 +255,8 @@ In conclusion, our model achieves high accuracy thanks to the high-quality datas
 
 The project was made and is maintained by me ([Manuteaa](https://github.com/Manuteaa)). If you enjoy this project, consider giving it a ⭐! Starring the repository helps others discover it, and shows support for the work put into it. Your stars motivate me to add new features and address any bugs.
 
-Feel free to open a new issue for any question, suggestion or issue. You can also join the [discord server](https://discord.gg/3mewehHHpZ) for more info and help.
+Feel free to open a new issue for any question, suggestion or issue. You can also join the discord server https://discord.gg/3mewehHHpZ for more info and help.
 
 - A big thanks to [hemlock12](https://github.com/hemlock12) for the data collection help !
 - Thanks to [SouthernFrenzy](https://github.com/SouthernFrenzy) for the help and time to manage the discord server
 - Thanks [KevinSade](https://github.com/KevinSade) for the contribution to the discord server
-
