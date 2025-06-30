@@ -1,13 +1,14 @@
 import os
 from pathlib import Path
 from time import time, sleep
-from dbd.AI_model import AI_model
-from dbd.utils.directkeys import PressKey, ReleaseKey, SPACE
 
 from gradio import (
     Dropdown, Radio, Number, Image, Label, Button, Slider,
-    skip, Info, Warning, Error, Blocks, Row, Column, Markdown
+    skip, Info, Warning, Error, Blocks, Row, Column, Markdown,
 )
+
+from dbd.AI_model import AI_model
+from dbd.utils.directkeys import PressKey, ReleaseKey, SPACE
 
 
 def monitor(ai_model_path, device, debug_option, hit_ante, cpu_stress):
@@ -107,6 +108,7 @@ def monitor(ai_model_path, device, debug_option, hit_ante, cpu_stress):
 
 if __name__ == "__main__":
     debug_folder = "saved_images"
+    models_folder = "models"
 
     debug_options = [
         "None (default)",
@@ -119,9 +121,9 @@ if __name__ == "__main__":
     devices = ["CPU (default)", "GPU"]
 
     # Find available AI models
-    model_files = [os.path.basename(f) for f in os.listdir("models/") if f.endswith(".onnx") or f.endswith(".engine")]
+    model_files = [(f, f'{models_folder}/{f}') for f in os.listdir(f"{models_folder}/") if f.endswith(".onnx") or f.endswith(".engine")]
     if len(model_files) == 0:
-        raise Error("No AI model found in 'models/' folder.", duration=0)
+        raise Error(f"No AI model found in {models_folder}/", duration=0)
 
     with (Blocks(title="DBD Auto skill check") as webui):
         Markdown("<h1 style='text-align: center;'>DBD Auto skill check</h1>", elem_id="title")
@@ -131,11 +133,7 @@ if __name__ == "__main__":
             with Column(variant="panel"):
                 with Column(variant="panel"):
                     Markdown("AI inference settings")
-                    ai_model_path = Dropdown(
-                        choices=model_files,  # Show both ONNX and TensorRT models
-                        value=model_files[0],  # Default to first detected model
-                        label="Name the AI model to use (ONNX or TensorRT Engine)"
-                    )
+                    ai_model_path = Dropdown(choices=model_files, value=model_files[0][1], label="Name the AI model to use (ONNX or TensorRT Engine)")
                     device = Radio(choices=devices, value=devices[0], label="Device the AI model will use")
                 with Column(variant="panel"):
                     Markdown("Debug options - for debugging or analytics")
@@ -162,6 +160,7 @@ if __name__ == "__main__":
             inputs=[ai_model_path, device, debug_option, hit_ante, cpu_stress], 
             outputs=[fps, image_pil, probs]
         )
+
         stop_button.click(fn=None, inputs=None, outputs=None, cancels=[monitoring])
 
     webui.launch()
