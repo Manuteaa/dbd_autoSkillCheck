@@ -5,7 +5,8 @@ import numpy as np
 import onnxruntime as ort
 from PIL import Image
 from mss import mss
-from pyautogui import size as pyautogui_size
+
+from dbd.utils.monitor import get_monitor_attributes
 
 try:
     import torch
@@ -23,17 +24,7 @@ except ImportError as e:
     trt_ok = False
 
 
-def get_monitor_attributes():
-    width, height = pyautogui_size()
-    object_size_h_ratio = 224 / 1080
-    object_size = int(object_size_h_ratio * height)
 
-    return {
-        "top": height // 2 - object_size // 2,
-        "left": width // 2 - object_size // 2,
-        "width": object_size,
-        "height": object_size
-    }
 
 class AI_model:
     MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)

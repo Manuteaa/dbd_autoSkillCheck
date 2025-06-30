@@ -1,22 +1,9 @@
-import mss
 from mss.tools import to_png
 import mss.tools
 import time
 import os
-import pyautogui
 
-
-def get_monitor_attributes():
-    width, height = pyautogui.size()
-    object_size_h_ratio = 320 / 1080
-    object_size = int(object_size_h_ratio * height)
-
-    return {
-        "top": height // 2 - object_size // 2,
-        "left": width // 2 - object_size // 2,
-        "width": object_size,
-        "height": object_size
-    }
+from dbd.utils.monitor import get_monitor_attributes
 
 
 if __name__ == '__main__':
@@ -25,7 +12,7 @@ if __name__ == '__main__':
     os.mkdir(dataset_folder)
 
     # Get monitor attributes
-    monitor = get_monitor_attributes()
+    monitor = get_monitor_attributes(crop_size=320)
 
     try:
         with mss.mss() as sct:
