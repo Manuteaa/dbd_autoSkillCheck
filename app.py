@@ -104,8 +104,6 @@ def monitor(ai_model_path, device, debug_option, hit_ante, cpu_stress):
             t0 = time()
             nb_frames = 0
 
-    print("HERE")
-
 
 if __name__ == "__main__":
     debug_folder = "saved_images"
@@ -121,9 +119,9 @@ if __name__ == "__main__":
     devices = ["CPU (default)", "GPU"]
 
     # Find available AI models
-    model_files = [f for f in os.listdir() if f.endswith(".onnx") or f.endswith(".engine")]
-    if not model_files:
-        model_files = ["model.onnx"]  # Default if no models found
+    model_files = [os.path.basename(f) for f in os.listdir("models/") if f.endswith(".onnx") or f.endswith(".engine")]
+    if len(model_files) == 0:
+        raise Error("No AI model found in 'models/' folder.", duration=0)
 
     with (Blocks(title="DBD Auto skill check") as webui):
         Markdown("<h1 style='text-align: center;'>DBD Auto skill check</h1>", elem_id="title")
@@ -136,7 +134,7 @@ if __name__ == "__main__":
                     ai_model_path = Dropdown(
                         choices=model_files,  # Show both ONNX and TensorRT models
                         value=model_files[0],  # Default to first detected model
-                        label="Filepath of the AI model (ONNX or TensorRT Engine)"
+                        label="Name the AI model to use (ONNX or TensorRT Engine)"
                     )
                     device = Radio(choices=devices, value=devices[0], label="Device the AI model will use")
                 with Column(variant="panel"):
