@@ -9,17 +9,18 @@ from gradio import (
 
 from dbd.AI_model import AI_model
 from dbd.utils.directkeys import PressKey, ReleaseKey, SPACE
+from dbd.utils.monitor import get_monitors, get_monitor_attributes, get_frame
 
 
-def monitor(ai_model_path, device, debug_option, hit_ante, cpu_stress):
+def monitor(ai_model_path, device, monitor_id, hit_ante, cpu_stress):
     if ai_model_path is None or not os.path.exists(ai_model_path):
         raise Error("Invalid AI model file", duration=0)
 
     if device is None:
         raise Error("Invalid device option")
 
-    if debug_option is None:
-        raise Error("Invalid debug option")
+    if monitor_id is None:
+        raise Error("Invalid monitor option")
 
     if cpu_stress == "min":
         nb_cpu_threads = 1
@@ -32,7 +33,7 @@ def monitor(ai_model_path, device, debug_option, hit_ante, cpu_stress):
 
     try:
         use_gpu = (device == devices[1])
-        ai_model = AI_model(ai_model_path, use_gpu, nb_cpu_threads)
+        ai_model = AI_model(ai_model_path, use_gpu, nb_cpu_threads, monitor_id)
         execution_provider = ai_model.check_provider()
     except Exception as e:
         raise Error("Error when loading AI model: {}".format(e), duration=0)
@@ -90,13 +91,6 @@ if __name__ == "__main__":
     debug_folder = "saved_images"
     models_folder = "models"
 
-    debug_options = [
-        "None (default)",
-        "Display the monitored frame (a 224x224 center-cropped image, displayed at 1fps) instead of last hit skill check frame. Useful to check the monitored screen",
-        "Save hit skill check frames in {}/".format(debug_folder),
-        "Save all skill check frames in {}/ (will impact fps)".format(debug_folder)
-    ]
-
     fps_info = "Number of frames per second the AI model analyses the monitored frame. Check The GitHub FAQ for more details and requirements."
     devices = ["CPU (default)", "GPU"]
 
@@ -104,6 +98,12 @@ if __name__ == "__main__":
     model_files = [(f, f'{models_folder}/{f}') for f in os.listdir(f"{models_folder}/") if f.endswith(".onnx") or f.endswith(".engine")]
     if len(model_files) == 0:
         raise Error(f"No AI model found in {models_folder}/", duration=0)
+
+    # Monitor selection
+    monitor_choices = get_monitors()
+    def switch_monitor(monitor_id):
+        monitor = get_monitor_attributes(monitor_id, crop_size=320)
+        return get_frame(monitor)
 
     with (Blocks(title="DBD Auto skill check") as webui):
         Markdown("<h1 style='text-align: center;'>DBD Auto skill check</h1>", elem_id="title")
@@ -115,6 +115,7 @@ if __name__ == "__main__":
                     Markdown("AI inference settings")
                     ai_model_path = Dropdown(choices=model_files, value=model_files[0][1], label="Name the AI model to use (ONNX or TensorRT Engine)")
                     device = Radio(choices=devices, value=devices[0], label="Device the AI model will use")
+                    monitor_id = Dropdown(choices=monitor_choices, value=monitor_choices[0][1], label="Monitor to use")
                 with Column(variant="panel"):
                     Markdown("AI Features options")
                     hit_ante = Slider(minimum=0, maximum=50, step=5, value=20, label="Ante-frontier hit delay in ms")
@@ -134,10 +135,11 @@ if __name__ == "__main__":
 
         monitoring = run_button.click(
             fn=monitor, 
-            inputs=[ai_model_path, device, debug_option, hit_ante, cpu_stress], 
+            inputs=[ai_model_path, device, monitor_id, hit_ante, cpu_stress],
             outputs=[fps, image_pil, probs]
         )
 
         stop_button.click(fn=None, inputs=None, outputs=None, cancels=[monitoring])
+        monitor_id.select(fn=switch_monitor, inputs=monitor_id, outputs=image_pil)
 
     webui.launch()

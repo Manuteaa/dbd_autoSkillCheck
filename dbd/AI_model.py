@@ -11,7 +11,7 @@ from dbd.utils.monitor import get_monitor_attributes
 try:
     import torch
     torch_ok = True
-    print("Info: torch library found. You can use onnx AI model with CPU or GPU mode for inference.")
+    print("Info: torch library found.")
 except ImportError as e:
     torch_ok = False
     print("Info: torch library not found. You must use onnx AI model with CPU mode for inference.")
@@ -19,9 +19,10 @@ except ImportError as e:
 try:
     import tensorrt as trt
     trt_ok = True
-    print("Info: tensorRT library found. You can use onnx or engine AI models with CPU or GPU mode for inference.")
+    print("Info: tensorRT library found.")
 except ImportError as e:
     trt_ok = False
+    print("Info: tensorRT library not found.")
 
 
 
@@ -44,12 +45,12 @@ class AI_model:
         10: {"desc": "wiggle (out)", "hit": False}
     }
 
-    def __init__(self, model_path="model.onnx", use_gpu=False, nb_cpu_threads=None):
+    def __init__(self, model_path="model.onnx", use_gpu=False, nb_cpu_threads=None, monitor_id=1):
         self.model_path = model_path
         self.use_gpu = use_gpu
         self.nb_cpu_threads = nb_cpu_threads
         self.mss = mss()
-        self.monitor = get_monitor_attributes()
+        self.monitor = get_monitor_attributes(monitor_id, crop_size=224)
 
         self.context = None
         self.engine = None
