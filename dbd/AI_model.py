@@ -1,16 +1,26 @@
-import numpy as np
-from PIL import Image
-from mss import mss
-import onnxruntime as ort
 import atexit
 import sys
+
+import numpy as np
+import onnxruntime as ort
+from PIL import Image
+from mss import mss
 from pyautogui import size as pyautogui_size
 
 try:
     import torch
-    import tensorrt as trt
+    torch_ok = True
+    print("Info: torch library found. You can use onnx AI model with CPU or GPU mode for inference.")
 except ImportError as e:
-    print(e)
+    torch_ok = False
+    print("Info: torch library not found. You must use onnx AI model with CPU mode for inference.")
+
+try:
+    import tensorrt as trt
+    trt_ok = True
+    print("Info: tensorRT library found. You can use onnx or engine AI models with CPU or GPU mode for inference.")
+except ImportError as e:
+    trt_ok = False
 
 
 def get_monitor_attributes():
@@ -54,9 +64,9 @@ class AI_model:
         self.engine = None
 
         if model_path.endswith(".engine"):
-            assert self.use_gpu, "TensorRT engine model requires GPU mode"
-            assert "torch" in sys.modules, "TensorRT engine model requires torch lib"
-            assert "tensorrt" in sys.modules, "TensorRT engine model requires tensorrt lib"
+            assert self.use_gpu, "TensorRT engine model requires GPU mode. Aborting."
+            assert torch_ok, "TensorRT engine model requires torch lib. Aborting."
+            assert trt_ok, "TensorRT engine model requires tensorrt lib. Aborting."
             self.load_tensorrt()
         else:
             self.load_onnx()
