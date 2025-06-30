@@ -48,12 +48,6 @@ def monitor(ai_model_path, device, debug_option, hit_ante, cpu_stress):
         if use_gpu:
             Warning("Could not run AI model on GPU device. Check python console logs to debug.")
 
-    # Create debug folders
-    if debug_option == debug_options[2] or debug_option == debug_options[3]:
-        Path(debug_folder).mkdir(exist_ok=True)
-        for folder_idx in range(len(ai_model.pred_dict)):
-            Path(os.path.join(debug_folder, str(folder_idx))).mkdir(exist_ok=True)
-
     # Variables
     t0 = time()
     nb_frames = 0
@@ -67,11 +61,6 @@ def monitor(ai_model_path, device, debug_option, hit_ante, cpu_stress):
 
         pred, desc, probs, should_hit = ai_model.predict(image_np)
 
-        if pred != 0 and debug_option == debug_options[3]:
-            path = os.path.join(debug_folder, str(pred), "{}.png".format(nb_hits))
-            image_pil.save(path)
-            nb_hits += 1
-
         if should_hit:
             # ante-frontier hit delay
             if pred == 2 and hit_ante > 0:
@@ -82,11 +71,6 @@ def monitor(ai_model_path, device, debug_option, hit_ante, cpu_stress):
 
             yield skip(), image_pil, probs
 
-            if debug_option == debug_options[2]:
-                path = os.path.join(debug_folder, str(pred), "hit_{}.png".format(nb_hits))
-                image_pil.save(path)
-                nb_hits += 1
-
             sleep(0.5)  # avoid hitting the same skill check multiple times
             t0 = time()
             nb_frames = 0
@@ -96,11 +80,7 @@ def monitor(ai_model_path, device, debug_option, hit_ante, cpu_stress):
         t_diff = time() - t0
         if t_diff > 1.0:
             fps = round(nb_frames / t_diff, 1)
-
-            if debug_option == debug_options[1]:
-                yield fps, image_pil, skip()
-            else:
-                yield fps, skip(), skip()
+            yield fps, skip(), skip()
 
             t0 = time()
             nb_frames = 0
@@ -136,10 +116,7 @@ if __name__ == "__main__":
                     ai_model_path = Dropdown(choices=model_files, value=model_files[0][1], label="Name the AI model to use (ONNX or TensorRT Engine)")
                     device = Radio(choices=devices, value=devices[0], label="Device the AI model will use")
                 with Column(variant="panel"):
-                    Markdown("Debug options - for debugging or analytics")
-                    debug_option = Dropdown(choices=debug_options, value=debug_options[0], label="Debugging selection")
-                with Column(variant="panel"):
-                    Markdown("Features options")
+                    Markdown("AI Features options")
                     hit_ante = Slider(minimum=0, maximum=50, step=5, value=20, label="Ante-frontier hit delay in ms")
                     cpu_stress = Radio(
                         label="CPU workload for AI model inference (increase to improve AI model FPS or decrease to reduce CPU stress)",
