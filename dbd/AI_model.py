@@ -112,10 +112,9 @@ class AI_model:
         assert torch_ok, "TensorRT engine model requires torch lib. Aborting."
         assert trt_ok, "TensorRT engine model requires tensorrt lib. Aborting."
 
-        cuda.init()  # Initialize CUDA driver
+        cuda.init()
         device = cuda.Device(0)
         self.cuda_context = device.make_context()
-        self.cuda_context.push()
 
         logger = trt.Logger(trt.Logger.WARNING)
         runtime = trt.Runtime(logger)
@@ -166,20 +165,19 @@ class AI_model:
         return "TensorRT" if self.engine else self.ort_session.get_providers()[0]
 
     def cleanup(self):
-        print("Info: AI_model cleanup called.")
-        if self.bindings:
-            for binding in self.bindings:
-                binding.free()
-
-        if self.cuda_context:
-            self.cuda_context.pop()
-            self.cuda_context.detach()
-
-        self.cuda_context = None
-        self.bindings = None
         self.stream = None
         self.context = None
         self.engine = None
+
+        if self.bindings:
+            for binding in self.bindings:
+                binding.free()
+            self.bindings = None
+
+        if self.cuda_context:
+            self.cuda_context.pop()
+            self.cuda_context = None
+            print("Info: Cuda context released")
 
     def __enter__(self):
         return self
