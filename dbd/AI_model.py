@@ -1,6 +1,3 @@
-import atexit
-import sys
-
 import numpy as np
 import onnxruntime as ort
 from PIL import Image
@@ -16,15 +13,15 @@ except ImportError as e:
     torch_ok = False
     print("Info: torch library not found. You must use onnx AI model with CPU mode for inference.")
 
+
 try:
     import tensorrt as trt
+    import pycuda.driver as cuda
     trt_ok = True
-    print("Info: tensorRT library found.")
+    print("Info: tensorRT and pycuda library found.")
 except ImportError as e:
     trt_ok = False
-    print("Info: tensorRT library not found.")
-
-
+    print("Info: tensorRT or pycuda library not found.")
 
 
 class AI_model:
@@ -52,24 +49,22 @@ class AI_model:
         self.mss = mss()
         self.monitor = get_monitor_attributes(monitor_id, crop_size=224)
 
-        self.context = None
-        self.engine = None
+        # Onnx model
+        self.ort_session = None
+        self.input_name = None
 
-        if model_path.endswith(".engine"):
-            assert self.use_gpu, "TensorRT engine model requires GPU mode. Aborting."
-            assert torch_ok, "TensorRT engine model requires torch lib. Aborting."
-            assert trt_ok, "TensorRT engine model requires tensorrt lib. Aborting."
+        # TensorRT model
+        self.cuda_context = None
+        self.engine = None
+        self.context = None
+        self.stream = None
+        self.tensor_shapes = None
+        self.bindings = None
+
+        if model_path.endswith(".trt"):
             self.load_tensorrt()
         else:
             self.load_onnx()
-
-        atexit.register(self.cleanup)
-
-    def cleanup(self):
-        if self.is_tensorrt:
-            del self.context
-            del self.engine
-            torch.cuda.empty_cache()
 
     def grab_screenshot(self):
         return self.mss.grab(self.monitor)
@@ -98,7 +93,7 @@ class AI_model:
             sess_options.inter_op_num_threads = self.nb_cpu_threads
 
         if self.use_gpu:
-            assert "torch" in sys.modules, "GPU mode requires torch lib"
+            assert torch_ok, "GPU mode requires torch lib"
             available_providers = ort.get_available_providers()
             preferred_execution_providers = ['CUDAExecutionProvider', 'DmlExecutionProvider', 'CPUExecutionProvider']
             execution_providers = [p for p in preferred_execution_providers if p in available_providers]
@@ -110,85 +105,57 @@ class AI_model:
         )
 
         self.input_name = self.ort_session.get_inputs()[0].name
-        self.input_dtype = self.ort_session.get_inputs()[0].type
-        self.is_tensorrt = False
 
     def load_tensorrt(self):
-        self.is_tensorrt = True
+        # https://github.com/NVIDIA/TensorRT/blob/HEAD/quickstart/IntroNotebooks/2.%20Using%20PyTorch%20through%20ONNX.ipynb
+        assert self.use_gpu, "TensorRT engine model requires GPU mode. Aborting."
+        assert torch_ok, "TensorRT engine model requires torch lib. Aborting."
+        assert trt_ok, "TensorRT engine model requires tensorrt lib. Aborting."
+
+        cuda.init()  # Initialize CUDA driver
+        device = cuda.Device(0)
+        self.cuda_context = device.make_context()
+        self.cuda_context.push()
+
         logger = trt.Logger(trt.Logger.WARNING)
         runtime = trt.Runtime(logger)
 
         with open(self.model_path, "rb") as f:
             engine_data = f.read()
             self.engine = runtime.deserialize_cuda_engine(engine_data)
+            self.context = self.engine.create_execution_context()
 
-        self.stream = torch.cuda.Stream()
-        self.context = self.engine.create_execution_context()
-        self.inputs, self.outputs, self.bindings = self.allocate_buffers(self.engine)
+        tensor_names = [self.engine.get_tensor_name(i) for i in range(self.engine.num_io_tensors)]
+        assert len(tensor_names) == 2
 
-    def allocate_buffers(self, engine):
-        inputs, outputs, bindings = [], [], []
+        self.tensor_shapes = [self.engine.get_tensor_shape(n) for n in tensor_names]
+        tensor_in = np.empty(self.tensor_shapes[0], dtype=np.float32)
+        tensor_out = np.empty(self.tensor_shapes[1], dtype=np.float32)
 
-        for i in range(engine.num_io_tensors):
-            tensor_name = engine.get_tensor_name(i)
-            tensor_shape = engine.get_tensor_shape(tensor_name)
-            tensor_dtype = trt.nptype(engine.get_tensor_dtype(tensor_name))
+        p_input = cuda.mem_alloc(1 * tensor_in.nbytes)
+        p_output = cuda.mem_alloc(1 * tensor_out.nbytes)
 
-            if -1 in tensor_shape:
-                raise ValueError(f"Tensor '{tensor_name}' has a dynamic shape {tensor_shape}. Set static dimensions before inference!")
+        self.context.set_tensor_address(tensor_names[0], int(p_input))
+        self.context.set_tensor_address(tensor_names[1], int(p_output))
 
-            size = trt.volume(tensor_shape)
-            device_mem = torch.empty(size, dtype=torch.float32, device="cuda")
-            host_mem = np.empty(size, dtype=tensor_dtype)
+        self.bindings = [p_input, p_output]
+        self.stream = cuda.Stream()
 
-            bindings.append(device_mem.data_ptr())
-
-            tensor_mode = engine.get_tensor_mode(tensor_name)
-            tensor_info = {'host': host_mem, 'device': device_mem, 'name': tensor_name}
-
-            if tensor_mode == trt.TensorIOMode.INPUT:
-                inputs.append(tensor_info)
-            else:
-                outputs.append(tensor_info)
-
-        return inputs, outputs, bindings
-
-    def predict(self, image):
-        if isinstance(image, np.ndarray):
-            img_np = image
-        else:
-            img_np = self.pil_to_numpy(image)
-
+    def predict(self, img_np):
         img_np = np.ascontiguousarray(img_np)
 
-        if self.is_tensorrt:
-            torch.cuda.synchronize()
-            torch.cuda.current_stream().wait_stream(self.stream)
+        if self.engine:
+            output = np.empty(self.tensor_shapes[1], dtype=np.float32)
+            cuda.memcpy_htod_async(self.bindings[0], img_np, self.stream)  # transfer input data to device
+            self.context.execute_async_v3(self.stream.handle)  # execute model
+            cuda.memcpy_dtoh_async(output, self.bindings[1], self.stream)  # transfer predictions back
+            self.stream.synchronize()  # synchronize threads
 
-            np.copyto(self.inputs[0]['host'], img_np.ravel())
-            self.inputs[0]['device'].copy_(torch.tensor(self.inputs[0]['host'], dtype=torch.float32, device="cuda"))
-
-            self.context.execute_v2(bindings=self.bindings)
-
-            stream = torch.cuda.Stream()
-            with torch.cuda.stream(stream): 
-                output_tensor = self.outputs[0]['device'].to("cpu", non_blocking=True)
-
-            torch.cuda.current_stream().wait_stream(stream)
-
-            self.outputs[0]['host'][:] = output_tensor.numpy()
-
-            torch.cuda.synchronize()
-            logits = np.squeeze(self.outputs[0]['host'])
         else:
-            if self.input_dtype == "tensor(float)":
-                img_np = img_np.astype(np.float32)
-            elif self.input_dtype == "tensor(float16)":
-                img_np = img_np.astype(np.float16)
-
             ort_inputs = {self.input_name: img_np}
-            logits = np.squeeze(self.ort_session.run(None, ort_inputs))
+            output = self.ort_session.run(None, ort_inputs)
 
+        logits = np.squeeze(output)
         pred = int(np.argmax(logits))
         probs = self.softmax(logits)
         probs_dict = {self.pred_dict[i]["desc"]: probs[i] for i in range(len(probs))}
@@ -196,4 +163,29 @@ class AI_model:
         return pred, self.pred_dict[pred]["desc"], probs_dict, self.pred_dict[pred]["hit"]
 
     def check_provider(self):
-        return "TensorRT" if self.is_tensorrt else self.ort_session.get_providers()[0]
+        return "TensorRT" if self.engine else self.ort_session.get_providers()[0]
+
+    def cleanup(self):
+        print("Info: AI_model cleanup called.")
+        if self.bindings:
+            for binding in self.bindings:
+                binding.free()
+
+        if self.cuda_context:
+            self.cuda_context.pop()
+            self.cuda_context.detach()
+
+        self.cuda_context = None
+        self.bindings = None
+        self.stream = None
+        self.context = None
+        self.engine = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.cleanup()
+
+    def __del__(self):
+        self.cleanup()
