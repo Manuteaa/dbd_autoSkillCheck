@@ -72,7 +72,7 @@ class AI_model:
     def screenshot_to_pil(self, screenshot):
         pil_image = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
         if pil_image.width != 224 or pil_image.height != 224:
-            pil_image = pil_image.resize((224, 224), Image.Resampling.LANCZOS)
+            pil_image = pil_image.resize((224, 224), Image.Resampling.BICUBIC)
         return pil_image
 
     def pil_to_numpy(self, image_pil):
