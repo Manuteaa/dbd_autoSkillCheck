@@ -112,7 +112,7 @@ if __name__ == "__main__":
         monitor = get_monitor_attributes(monitor_id, crop_size=320)
         return get_frame(monitor)
 
-    with (Blocks(title="DBD Auto skill check") as webui):
+    with (Blocks(title="Auto skill check") as webui):
         Markdown("<h1 style='text-align: center;'>DBD Auto skill check</h1>", elem_id="title")
         Markdown("https://github.com/Manuteaa/dbd_autoSkillCheck")
 
