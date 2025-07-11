@@ -147,7 +147,7 @@ if __name__ == "__main__":
         )
 
         stop_button.click(fn=cleanup, inputs=None, outputs=fps)
-        monitor_id.select(fn=switch_monitor, inputs=monitor_id, outputs=image_pil)
+        monitor_id.blur(fn=switch_monitor, inputs=monitor_id, outputs=image_pil)  # triggered when selection is closed
 
     try:
         webui.launch()
