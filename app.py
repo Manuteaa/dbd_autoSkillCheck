@@ -17,9 +17,10 @@ def cleanup():
     if ai_model is not None:
         del ai_model
         ai_model = None
+    return 0.
 
 
-def monitor(ai_model_path, device, monitor_id, hit_ante, cpu_stress):
+def monitor(ai_model_path, device, monitor_id, hit_ante, nb_cpu_threads):
     if ai_model_path is None or not os.path.exists(ai_model_path):
         raise Error("Invalid AI model file", duration=0)
 
@@ -28,15 +29,6 @@ def monitor(ai_model_path, device, monitor_id, hit_ante, cpu_stress):
 
     if monitor_id is None:
         raise Error("Invalid monitor option")
-
-    if cpu_stress == "min":
-        nb_cpu_threads = 1
-    elif cpu_stress == "low":
-        nb_cpu_threads = 2
-    elif cpu_stress == "normal":
-        nb_cpu_threads = 4
-    else:
-        nb_cpu_threads = None
 
     use_gpu = (device == devices[1])
 
@@ -107,6 +99,7 @@ if __name__ == "__main__":
 
     fps_info = "Number of frames per second the AI model analyses the monitored frame. Check The GitHub FAQ for more details and requirements."
     devices = ["CPU (default)", "GPU"]
+    cpu_choices = [("Very low", 1), ("Low", 2), ("Normal", 4), ("High", 8), ("Very high", 12)]
 
     # Find available AI models
     model_files = [(f, f'{models_folder}/{f}') for f in os.listdir(f"{models_folder}/") if f.endswith(".onnx") or f.endswith(".trt")]
@@ -135,8 +128,8 @@ if __name__ == "__main__":
                     hit_ante = Slider(minimum=0, maximum=50, step=5, value=20, label="Ante-frontier hit delay in ms")
                     cpu_stress = Radio(
                         label="CPU workload for AI model inference (increase to improve AI model FPS or decrease to reduce CPU stress)",
-                        choices=["min", "low", "normal", "max"],
-                        value="low"
+                        choices=cpu_choices,
+                        value=cpu_choices[2][1],
                     )
                 with Column():
                     run_button = Button("RUN", variant="primary")
@@ -153,7 +146,7 @@ if __name__ == "__main__":
             outputs=[fps, image_pil, probs]
         )
 
-        stop_button.click(fn=cleanup, inputs=None, outputs=stop_button)
+        stop_button.click(fn=cleanup, inputs=None, outputs=fps)
         monitor_id.select(fn=switch_monitor, inputs=monitor_id, outputs=image_pil)
 
     try:
