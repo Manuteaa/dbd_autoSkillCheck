@@ -1,0 +1,23 @@
+# Core AI and Computer Vision
+numpy>=1.24.0
+onnxruntime>=1.15.0
+pillow>=10.0.0
+
+# Screen capture and input
+mss>=9.0.0
+pyautogui>=0.9.50
+
+# Web UI
+gradio>=4.0.0
+
+# Development and utilities
+IPython>=8.0.0
+
+# Optional GPU support (uncomment if needed)
+# onnxruntime-gpu>=1.15.0  # For NVIDIA CUDA GPUs
+# onnxruntime-directml>=1.15.0  # For AMD/Intel GPUs without CUDA
+
+# Optional for advanced features
+# torch>=2.0.0  # For PyTorch models
+# tensorrt>=8.0.0  # For TensorRT optimization
+# pycuda>=2022.1  # For CUDA operations
