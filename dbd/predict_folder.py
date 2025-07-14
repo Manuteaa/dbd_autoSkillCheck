@@ -68,12 +68,12 @@ if __name__ == '__main__':
 
     # COMPARE
     t0 = time()
-    results1 = infer_from_folder_onnx(folder, "models/model.onnx", use_gpu=True)
+    results1 = infer_from_folder_onnx(folder, "models/model.onnx", use_gpu=False, nb_cpu_threads=8)
     print(f"Model 1: {time() - t0:.2f} seconds")
 
-    t0 = time()
-    results2 = infer_from_folder_onnx(folder, "models/model.trt", use_gpu=True)
-    print(f"Model 2: {time() - t0:.2f} seconds")
+    # t0 = time()
+    # results2 = infer_from_folder_onnx(folder, "models/model.trt", use_gpu=True)
+    # print(f"Model 2: {time() - t0:.2f} seconds")
 
     # Compare results
     # results1 = np.array(results1)
