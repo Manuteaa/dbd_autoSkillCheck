@@ -1,0 +1,149 @@
+============================================================
+DBD Auto Skill Check - Code Analysis Report
+============================================================
+
+📊 PROJECT METRICS:
+  • Total Python files: 17
+  • Total lines of code: 2571
+  • Total functions: 98
+  • Total classes: 17
+
+📚 DOCUMENTATION COVERAGE:
+  • Files with docstrings: 23.5%
+  • Functions with docstrings: 72.4%
+  • Functions with type hints: 44.9%
+
+🛡️ ERROR HANDLING:
+  • Error handling blocks: 42
+
+📁 FILE ANALYSIS:
+
+  📄 setup.py
+     Lines: 223
+     Functions: 8
+     Classes: 0
+     Error handling: 4 blocks
+
+  📄 config.py
+     Lines: 167
+     Functions: 10
+     Classes: 2
+     Error handling: 4 blocks
+
+  📄 app.py
+     Lines: 332
+     Functions: 3
+     Classes: 0
+     Error handling: 7 blocks
+     ⚠️  Complex functions: ['monitor']
+     ⚠️  Issues: 7
+
+  📄 test_basic.py
+     Lines: 308
+     Functions: 16
+     Classes: 6
+     Error handling: 3 blocks
+
+  📄 analyze_code.py
+     Lines: 373
+     Functions: 16
+     Classes: 1
+     Error handling: 1 blocks
+     ⚠️  Complex functions: ['generate_report']
+     ⚠️  Issues: 6
+
+  📄 dbd/predict_folder.py
+     Lines: 82
+     Functions: 2
+     Classes: 0
+     Error handling: 0 blocks
+     ⚠️  Issues: 2
+
+  📄 dbd/model_to_onnx.py
+     Lines: 22
+     Functions: 0
+     Classes: 0
+     Error handling: 0 blocks
+
+  📄 dbd/AI_model.py
+     Lines: 447
+     Functions: 14
+     Classes: 1
+     Error handling: 19 blocks
+     ⚠️  Complex functions: ['cleanup']
+     ⚠️  Issues: 3
+
+  📄 dbd/save_frames.py
+     Lines: 35
+     Functions: 0
+     Classes: 0
+     Error handling: 1 blocks
+
+  📄 dbd/preprocess_data.py
+     Lines: 16
+     Functions: 0
+     Classes: 0
+     Error handling: 0 blocks
+
+  📄 dbd/train.py
+     Lines: 44
+     Functions: 0
+     Classes: 0
+     Error handling: 0 blocks
+     ⚠️  Issues: 1
+
+  📄 dbd/networks/model.py
+     Lines: 91
+     Functions: 9
+     Classes: 1
+     Error handling: 0 blocks
+     ⚠️  Issues: 5
+
+  📄 dbd/utils/monitor.py
+     Lines: 106
+     Functions: 3
+     Classes: 0
+     Error handling: 3 blocks
+     ⚠️  Issues: 1
+
+  📄 dbd/utils/directkeys.py
+     Lines: 99
+     Functions: 4
+     Classes: 5
+     Error handling: 0 blocks
+
+  📄 dbd/utils/dataset_utils.py
+     Lines: 37
+     Functions: 2
+     Classes: 0
+     Error handling: 0 blocks
+     ⚠️  Issues: 1
+
+  📄 dbd/datasets/datasetLoader.py
+     Lines: 156
+     Functions: 9
+     Classes: 1
+     Error handling: 0 blocks
+     ⚠️  Issues: 5
+
+  📄 dbd/datasets/transforms.py
+     Lines: 33
+     Functions: 2
+     Classes: 0
+     Error handling: 0 blocks
+
+⚠️ ISSUES FOUND:
+  • Failed to analyze /home/runner/work/dbd_autoSkillCheck/dbd_autoSkillCheck/dbd/__init__.py: list index out of range
+  • Failed to analyze /home/runner/work/dbd_autoSkillCheck/dbd_autoSkillCheck/dbd/networks/__init__.py: list index out of range
+  • Failed to analyze /home/runner/work/dbd_autoSkillCheck/dbd_autoSkillCheck/dbd/utils/__init__.py: list index out of range
+  • Failed to analyze /home/runner/work/dbd_autoSkillCheck/dbd_autoSkillCheck/dbd/datasets/__init__.py: list index out of range
+
+✅ QUALITY ASSESSMENT:
+  ⚠️  Moderate documentation coverage
+  ❌ Poor type hint coverage
+  ✓ Good error handling coverage
+  ✓ Well-structured code organization
+  ✓ Good file organization with utilities
+
+🏆 OVERALL QUALITY SCORE: 3/5
+  👍 Good code quality

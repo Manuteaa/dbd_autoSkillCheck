@@ -1,11 +1,101 @@
+# Dataset and model files
 dataset*/
 *.ckpt
 *.yaml
+
+# IDE and editor files
 .idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Python
 *.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+python-embed/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Logs and runtime files
+*.log
+logs/
 lightning_logs/
 .ipynb_*
 saved_images/
-dist/
-build/
-python-embed/
+*.pid
+
+# Configuration and secrets
+config.json
+.env
+secrets.yaml
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+
+# Screenshots and recordings
+screenshots/
+recordings/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.mp4
+*.avi
+
+# Model artifacts (keep model.onnx in models/)
+models/*.pt
+models/*.pth
+models/*.safetensors
+!models/model.onnx
+!models/*.trt
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Performance profiling
+*.prof
+*.profile
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
