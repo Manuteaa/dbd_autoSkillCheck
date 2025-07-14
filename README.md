@@ -21,7 +21,7 @@ This tool is designed to demonstrate how AI can improve gameplay performance and
 * [Features](#features)
 * [Execution Instructions](#execution-instructions)
   * [Get the code](#get-the-code)
-    * [Python embedded app (recommended)](#python-embedded-app-recommended)
+    * [Python embedded app (RECOMMENDED)](#python-embedded-app-recommended)
     * [Build from source](#build-from-source)
     * [Windows standalone app](#windows-standalone-app)
   * [Auto skill-check Web UI](#auto-skill-check-web-ui)
@@ -38,7 +38,7 @@ This tool is designed to demonstrate how AI can improve gameplay performance and
 
 # Features
 - Real-time detection of skill checks (60fps)
-- High accuracy in recognizing **all types of skill checks (with a 98.7% precision, see details of [Results](#results))**
+- High accuracy of the AI model in recognizing **all types of skill checks (with a 98.7% precision, see details of [Results](#results))**
 - Automatic triggering of great skill checks through auto-pressing the space bar
 - A webUI to run the AI model
 - A GPU mode and a slow-CPU-usage mode to reduce CPU overhead
@@ -48,23 +48,24 @@ This tool is designed to demonstrate how AI can improve gameplay performance and
 
 ## Get the code
 
-You can get and run the code:
+We provide a simple web interface to configure and run the AI model. When running, it will monitor a small portion of the selected screen and automatically hit the space bar when a great skill check is detected. The screen analysis is done in real time locally on your computer, so NO data is neither saved nor sent to the internet.
 - [From the python embedded app](#python-embedded-app-recommended): Recommended and easiest way to run the AI model without installing anything.
 - [From source](#build-from-source): Recommended if you want to customize the code or run it on GPU.
-- [From the windows standalone app](#windows-standalone-app): Download the .zip file, and run the .exe file (no install required). Will be deprecated in the future for security and safety reasons.
+- [From the windows standalone app](#windows-standalone-app): Download the .zip file, and run the .exe file (no install required). Will be deprecated in the future for security reasons.
 
 
-### Python embedded app (recommended)
+### Python embedded app (RECOMMENDED)
 
-Use this method if you want to run the AI model without installing anything. I recommend this method if you are not familiar with Python and you just want to run the AI model.
+This is the recommended method to run the AI model. You don't need to install anything, and don't need any Python knowledge.
 
 1) Go to the [releases page](https://github.com/Manuteaa/dbd_autoSkillCheck/releases)
 2) Download the source code (zip) containing the code
-3) Download `python-embed.zip` containing python and all the necessary libraries
-4) Unzip the source code and unzip `python-embed.zip`
-5) Move the unzipped folder `python-embed` into the unzipped source code folder. At this point, you should have the folder `python-embed` and the file `app.py` in the same root folder
-6) You're done! Run `run_app.bat` (double click) to start the AI model web UI
-7) Follow the [next instructions](#auto-skill-check-web-ui)
+3) Download `python-embed.zip` containing python with all the necessary libraries
+4) Unzip the source code
+5) Move `python-embed.zip` into the unzipped source code folder, then unzip it
+6) Make sure you have the folder `python-embed` and the file `app.py` in the same folder
+7) You're done! Run `run_app.bat` (double click) to start the AI model web UI.
+8) Follow the [next instructions](#auto-skill-check-web-ui)
 
 
 ### Build from source
@@ -82,7 +83,7 @@ Use this method if you have some experience with Python and if you want to custo
 _Warning_: Some players reported that the .exe can cause EAC suspicious / ban, even in private games. That's why I recommend the two other execution methods, which are much safer to use. More details are available on the [Discord server](#acknowledgments).
 
 1) Go to the [releases page](https://github.com/Manuteaa/dbd_autoSkillCheck/releases)
-2) Download `standalone.zip`
+2) Download `standalone.zip` in an old release
 3) Unzip the file
 4) Run `app.exe` to start the AI model web UI
 5) Follow the [next instructions](#auto-skill-check-web-ui)
@@ -90,17 +91,17 @@ _Warning_: Some players reported that the .exe can cause EAC suspicious / ban, e
 
 ## Auto skill-check Web UI
 
-After having started the AI model web UI, a console will open (ignore the file not found INFO message), ctrl+click on the [link displayed in the console](http://127.0.0.1:7860) to open the local web UI.
+After having started the AI model web UI, a console will open, ctrl+click on the [local URL displayed in the console](http://127.0.0.1:7860) to open the local web UI.
 
 1) Select the trained AI model (default to `model.onnx` available in this repo)
-2) Select the device to use. Use default CPU device. GPU is only available using the [Build from source method](#build-from-source).
-3) Choose debug options. If you want to check which screen the script is monitoring, you can select the first option. If the AI struggles recognizing the skill checks, select the second option to save the results, then you can upload the images in a new GitHub issue
-4) Select additional features options (check the [FAQ](#faq) more for details)
+2) Select the device to use. Use default CPU device. GPU is only available using the [Build from source method](#build-from-source)
+3) Select your monitor, and verify on the right panel that the displayed image matches the monitor where you will play the game. For best AI model performance, use a monitor with a resolution of 1920x1080
+4) Configure additional features options (check the [FAQ](#faq) more for details)
 5) Click 'RUN'
-6) Run this and play the game ! It will hit the space bar for you.
+6) Run this and play the game ! It will hit the space bar for you
 7) You can STOP and RUN the script from the Web UI at will, for example when waiting in the game lobby
 
-Your main screen is now monitored meaning that frames are regularly sampled (with a center-crop) and analysed locally (on your computer) with the trained AI model. You can play the game on your main monitor.
+Your main screen is now monitored meaning that frames are regularly sampled (with a center-crop) and analysed locally (on your computer) with the trained AI model. You can now play the game.
 When a great skill check is detected, the SPACE key is automatically pressed, then it waits for 0.5s to avoid triggering the same skill check multiple times in a row.
 
 
@@ -224,7 +225,6 @@ In conclusion, our model achieves high accuracy thanks to the high-quality datas
 - Install onnxruntime DirectML with `pip install onnxruntime-directml` which allows you to run CUDA operations without NVIDIA GPUs
 
 **Why does the script do nothing ?**
-- Check if the AI model monitors correctly your game: set the debug option of the webui to "display the monitored frame". Play the game and check if it displays correctly the skill check
 - Check if you have no error in the python console logs
 - Use standard game settings (I recommend using 1080p at 100% resolution without any game filters, no vsync, no FSR): your displayed images "last hit skill check frame" should be similar with the ones in my examples
 - Check if you do not use a potato instead of a computer
@@ -234,10 +234,11 @@ In conclusion, our model achieves high accuracy thanks to the high-quality datas
 - The AI model FPS >= 60
 - Your ping is not too high (<= 60 should be fine)
 - Use standard game settings (I recommend using 1080p at 100% resolution without any game filters, no vsync, no FSR)
-- In the `Features options` of the WebUI, decrease the `Ante-frontier hit delay` value
+- In the `Features options` of the WebUI, decrease (closer to 0) the `Ante-frontier hit delay` value
 
 **I have lower values than 60 FPS for the AI model, what can I do ?**
-- In the `Features options` of the WebUI, increase the `CPU workload` option to `normal` or `max`
+- In the `Features options` of the WebUI, increase the `CPU workload` option
+- Switch your resolution to 1920x1080 at 100% scale
 - Switch device to gpu
 - Disable the energy saver settings in your computer settings
 - Run the script in administrator mode
@@ -247,9 +248,6 @@ In conclusion, our model achieves high accuracy thanks to the high-quality datas
 
 **Does the script work well with the perk hyperfocus ?**
 - Yes
-
-**Does the script work well for skill checks in random locations (doctor skill checks) ?**
-- Unfortunately, the script only monitors a small part of the center of your screen. It can not see the skill checks outside this area. Even if you make it work by editing the code (like capturing the whole screen and resize the frames to 224x224) the AI model was not trained to handle these special skill checks, so it will not work very well...
 
 # Acknowledgments
 
