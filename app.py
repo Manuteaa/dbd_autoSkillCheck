@@ -95,12 +95,11 @@ def monitor(ai_model_path, device, monitor_id, hit_ante, nb_cpu_threads):
 
 
 if __name__ == "__main__":
-    debug_folder = "saved_images"
     models_folder = "models"
 
-    fps_info = "Number of frames per second the AI model analyses the monitored frame. Check The GitHub FAQ for more details and requirements."
+    fps_info = "Number of frames per second the AI model analyses the monitored frame."
     devices = ["CPU (default)", "GPU"]
-    cpu_choices = [("Very low", 1), ("Low", 2), ("Normal", 4), ("High", 8), ("Very high", 12)]
+    cpu_choices = [("Low", 2), ("Normal", 4), ("High", 6), ("Computer Killer Mode", 8)]
 
     # Find available AI models
     model_files = [(f, f'{models_folder}/{f}') for f in os.listdir(f"{models_folder}/") if f.endswith(".onnx") or f.endswith(".trt")]
@@ -109,8 +108,8 @@ if __name__ == "__main__":
 
     # Monitor selection
     monitor_choices = get_monitors()
-    def switch_monitor(monitor_id):
-        monitor = get_monitor_attributes(monitor_id, crop_size=320)
+    def switch_monitor_cb(monitor_id):
+        monitor = get_monitor_attributes(monitor_id, crop_size=520)  # 520x520 center-crop, just for the debug display
         return get_frame(monitor)
 
     with (Blocks(title="Auto skill check") as webui):
@@ -130,7 +129,7 @@ if __name__ == "__main__":
                     cpu_stress = Radio(
                         label="CPU workload for AI model inference (increase to improve AI model FPS or decrease to reduce CPU stress)",
                         choices=cpu_choices,
-                        value=cpu_choices[2][1],
+                        value=cpu_choices[1][1],
                     )
                 with Column():
                     run_button = Button("RUN", variant="primary")
@@ -139,7 +138,7 @@ if __name__ == "__main__":
             with Column(variant="panel"):
                 fps = Number(label="AI model FPS", info=fps_info, interactive=False)
                 image_pil = Image(label="Last hit skill check frame", height=224, interactive=False)
-                probs = Label(label="Skill check recognition")
+                probs = Label(label="Skill check AI recognition")
 
         monitoring = run_button.click(
             fn=monitor, 
@@ -148,7 +147,7 @@ if __name__ == "__main__":
         )
 
         stop_button.click(fn=cleanup, inputs=None, outputs=fps)
-        monitor_id.blur(fn=switch_monitor, inputs=monitor_id, outputs=image_pil)  # triggered when selection is closed
+        monitor_id.blur(fn=switch_monitor_cb, inputs=monitor_id, outputs=image_pil)  # triggered when selection is closed
 
     try:
         webui.launch()
