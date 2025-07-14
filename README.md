@@ -58,14 +58,10 @@ We provide a simple web interface to configure and run the AI model. When runnin
 
 This is the recommended method to run the AI model. You don't need to install anything, and don't need any Python knowledge.
 
-1) Go to the [releases page](https://github.com/Manuteaa/dbd_autoSkillCheck/releases)
-2) Download the source code (zip) containing the code
-3) Download `python-embed.zip` containing python with all the necessary libraries
-4) Unzip the source code
-5) Move `python-embed.zip` into the unzipped source code folder, then unzip it
-6) Make sure you have the folder `python-embed` and the file `app.py` in the same folder
-7) You're done! Run `run_app.bat` (double click) to start the AI model web UI.
-8) Follow the [next instructions](#auto-skill-check-web-ui)
+1) Go to the [releases page](https://github.com/Manuteaa/dbd_autoSkillCheck/releases) and go to the **latest** release (at least v3.0)
+2) Download `dbd_autoSkillCheck.zip` and unzip it
+3) Run `run_app.bat` (double click) to start the AI model web UI. You can safely run it (ignore the windows warning message). If you do not feel 100% comfortable with it, just read the content of the `.bat` file, copy and paste the single line in a terminal to run it manually.
+4) Follow the [next instructions](#auto-skill-check-web-ui)
 
 
 ### Build from source
