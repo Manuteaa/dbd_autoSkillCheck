@@ -69,6 +69,7 @@ def monitor(ai_model_path, device, monitor_id, hit_ante, nb_cpu_threads):
                     sleep(hit_ante * 0.001)
 
                 PressKey(SPACE)
+                sleep(0.005)
                 ReleaseKey(SPACE)
 
                 yield skip(), image_pil, probs
