@@ -56,20 +56,21 @@ def infer_from_folder_onnx(folder, model_path, use_gpu=True, nb_cpu_threads=1, c
 
 
 if __name__ == '__main__':
-    # dataset_source = "dataset_prediction"  # screenshots
-    # checkpoint = "./lightning_logs/version_1/checkpoints"
+    folder = "test/"
 
-    folder = "dataset/tests/"
+    for idx in range(0, 12):
+        pred_folder = os.path.join(folder, str(idx))
+        os.makedirs(pred_folder)
 
     # PREDICT
-    # t0 = time()
-    # results1 = infer_from_folder_onnx(folder, "models/model.onnx", use_gpu=True, copy=True)
-    # print(f"Model 1: {time() - t0:.2f} seconds")
+    t0 = time()
+    results1 = infer_from_folder_onnx(folder, "models/model.onnx", use_gpu=True, move=True)
+    print(f"Model 1: {time() - t0:.2f} seconds")
 
     # COMPARE
-    t0 = time()
-    results1 = infer_from_folder_onnx(folder, "models/model.onnx", use_gpu=False, nb_cpu_threads=8)
-    print(f"Model 1: {time() - t0:.2f} seconds")
+    # t0 = time()
+    # results1 = infer_from_folder_onnx(folder, "models/model.onnx", use_gpu=False, nb_cpu_threads=8)
+    # print(f"Model 1: {time() - t0:.2f} seconds")
 
     # t0 = time()
     # results2 = infer_from_folder_onnx(folder, "models/model.trt", use_gpu=True)
