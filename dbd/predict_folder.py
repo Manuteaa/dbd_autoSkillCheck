@@ -40,8 +40,16 @@ def infer_from_folder_onnx(folder, model_path, use_gpu=True, nb_cpu_threads=1, c
     results = []
     for image in tqdm.tqdm(images):
         img = Image.open(image).convert("RGB")
-        if img.width != 224 or img.height != 224:
-            img = img.resize((224, 224), Image.Resampling.LANCZOS)
+
+        if img.width != 320 or img.height != 320:
+            img = img.resize((320, 320), Image.Resampling.BICUBIC)
+
+        # crop to 224x224 from center
+        left = (img.width - 224) // 2
+        top = (img.height - 224) // 2
+        right = left + 224
+        bottom = top + 224
+        img = img.crop((left, top, right, bottom))
 
         img = ai_model.pil_to_numpy(img)
         pred, _, _, _ = ai_model.predict(img)
@@ -56,11 +64,11 @@ def infer_from_folder_onnx(folder, model_path, use_gpu=True, nb_cpu_threads=1, c
 
 
 if __name__ == '__main__':
-    folder = "test/"
+    folder = "tests/"
 
     for idx in range(0, 12):
         pred_folder = os.path.join(folder, str(idx))
-        os.makedirs(pred_folder)
+        os.makedirs(pred_folder, exist_ok=True)
 
     # PREDICT
     t0 = time()
