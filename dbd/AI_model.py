@@ -1,7 +1,6 @@
 import numpy as np
 import onnxruntime as ort
 from PIL import Image
-
 from mss import mss
 
 from dbd.utils.monitor import get_monitor_attributes
@@ -153,6 +152,7 @@ class AI_model:
         self.input_name = self.ort_session.get_inputs()[0].name
 
     def load_tensorrt(self):
+        # https://github.com/NVIDIA/TensorRT/blob/HEAD/quickstart/IntroNotebooks/2.%20Using%20PyTorch%20through%20ONNX.ipynb
         assert self.use_gpu, "TensorRT engine model requires GPU mode. Aborting."
         assert torch_ok, "TensorRT engine model requires torch lib. Aborting."
         assert trt_ok, "TensorRT engine model requires tensorrt lib. Aborting."
