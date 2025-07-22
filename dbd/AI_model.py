@@ -3,7 +3,6 @@ import onnxruntime as ort
 from PIL import Image
 
 from mss import mss
-import time
 
 from dbd.utils.monitor import get_monitor_attributes
 
