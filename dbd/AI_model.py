@@ -57,7 +57,7 @@ class AI_model:
         self.monitor = get_monitor_attributes(monitor_id, crop_size=224)
 
         # Only create bettercam camera if requested and available
-        self.camera = bettercam.create() if self.use_bettercam else None
+        self.camera = bettercam.create(max_buffer_len=1) if self.use_bettercam else None
         self.bettercam_started = False
         self.bettercam_fps = bettercam_fps
         self.region = None  # Region for center crop
@@ -226,8 +226,9 @@ class AI_model:
 
         # Stop BetterCam if used
         if self.use_bettercam and self.camera is not None and self.bettercam_started:
-            self.camera.stop()
-            self.bettercam_started = False
+           self.camera.release()
+           self.bettercam_started = False
+           self.camera = None
 
     def __enter__(self):
         return self
