@@ -47,7 +47,7 @@ class AI_model:
         10: {"desc": "wiggle (out)", "hit": False}
     }
 
-    def __init__(self, model_path="model.onnx", use_gpu=False, nb_cpu_threads=None, monitor_id=1, use_bettercam=True, bettercam_fps=240):
+    def __init__(self, model_path="model.onnx", use_gpu=False, nb_cpu_threads=None, monitor_id=1, use_bettercam=False, bettercam_fps=240):
         self.model_path = model_path
         self.use_gpu = use_gpu
         self.nb_cpu_threads = nb_cpu_threads
