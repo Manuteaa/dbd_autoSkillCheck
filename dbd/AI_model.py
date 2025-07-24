@@ -2,7 +2,7 @@ import numpy as np
 import onnxruntime as ort
 from PIL import Image
 from mss import mss
-import cv2 
+import cv2
 
 from dbd.utils.monitor import get_monitor_attributes
 
@@ -10,25 +10,25 @@ try:
     import torch
     torch_ok = True
     print("Info: torch library found.")
-except ImportError as e:
+except ImportError:
     torch_ok = False
-    print("Info: torch library not found. You must use onnx AI model with CPU mode for inference.")
 
 try:
     import tensorrt as trt
     import pycuda.driver as cuda
     trt_ok = True
     print("Info: tensorRT and pycuda library found.")
-except ImportError as e:
+except ImportError:
     trt_ok = False
-    print("Info: tensorRT or pycuda library not found.")
 
-# Optional BetterCam support
 try:
     import bettercam
     bettercam_ok = True
+    # print(bettercam.device_info())
+    # print(bettercam.output_info())
 except ImportError:
     bettercam_ok = False
+
 
 class AI_model:
     MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
@@ -48,20 +48,24 @@ class AI_model:
         10: {"desc": "wiggle (out)", "hit": False}
     }
 
-    def __init__(self, model_path="model.onnx", use_gpu=False, nb_cpu_threads=None, monitor_id=1, use_bettercam=True, bettercam_fps=1000):
+    def __init__(self, model_path="model.onnx", use_gpu=False, nb_cpu_threads=None, monitor_id=1, use_bettercam=False):
         self.model_path = model_path
         self.use_gpu = use_gpu
         self.nb_cpu_threads = nb_cpu_threads
-        self.use_bettercam = use_bettercam and bettercam_ok
 
         self.mss = mss()
         self.monitor = get_monitor_attributes(monitor_id, crop_size=224)
 
-        # Only create bettercam camera if requested and available
-        self.camera = bettercam.create(max_buffer_len=1) if self.use_bettercam else None
-        self.bettercam_started = False
-        self.bettercam_fps = bettercam_fps
-        self.region = None  # Region for center crop
+        # Bettercam feature
+        self.bettercam_camera = None
+        if use_bettercam and bettercam_ok:
+            bettercam_monitor = (self.monitor["left"],
+                                 self.monitor["top"],
+                                 self.monitor["left"] + self.monitor["width"],
+                                 self.monitor["top"] + self.monitor["height"])
+
+            self.bettercam_camera = bettercam.create(max_buffer_len=1)  # TODO: monitor id
+            self.bettercam_camera.start(region=bettercam_monitor, target_fps=240)
 
         # Onnx model
         self.ort_session = None
@@ -80,40 +84,14 @@ class AI_model:
         else:
             self.load_onnx()
 
-    def bettercam_region(self):
-        # Only need to do this once
-        if self.region is not None:
-            return
-        # Get full frame to determine size
-        frame = self.camera.grab()
-        if frame is None:
-            raise RuntimeError("BetterCam: No initial frame.")
-        height, width, _ = frame.shape
-        crop_size = 224
-        object_size_h_ratio = crop_size / 1080  
-        object_size = int(object_size_h_ratio * height)
-        left = (width // 2) - (object_size // 2)
-        top = (height // 2) - (object_size // 2)
-        right = left + object_size
-        bottom = top + object_size
-        self.region = (left, top, right, bottom)
-
     def grab_screenshot(self):
-        if self.use_bettercam and self.camera is not None:
-            if not self.bettercam_started:
-                self.bettercam_region()
-                self.camera.start(region=self.region, target_fps=self.bettercam_fps)
-                self.bettercam_started = True
-            # get the latest frame 
-            frame = self.camera.get_latest_frame()
-            if frame is None:
-                raise RuntimeError("BetterCam: No latest frame. Try updating the screen.")
-            return frame
+        if self.bettercam_camera is not None:
+            return self.bettercam_camera.get_latest_frame()
         else:
             return self.mss.grab(self.monitor)
 
     def screenshot_to_pil(self, screenshot):
-        if self.use_bettercam and self.camera is not None:
+        if self.bettercam_camera is not None:
             #numpy
             return screenshot 
         else:
@@ -235,11 +213,10 @@ class AI_model:
             self.cuda_context = None
             print("Info: Cuda context released")
 
-        # Stop BetterCam if used
-        if self.use_bettercam and self.camera is not None and self.bettercam_started:
-           self.camera.release()
-           self.bettercam_started = False
-           self.camera = None
+        if self.bettercam_camera:
+            self.bettercam_camera.stop()
+            del self.bettercam_camera
+            self.bettercam_camera = None
 
     def __enter__(self):
         return self
