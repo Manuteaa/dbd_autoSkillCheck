@@ -2,6 +2,7 @@ import numpy as np
 import onnxruntime as ort
 from PIL import Image
 from mss import mss
+import cv2 
 
 from dbd.utils.monitor import get_monitor_attributes
 
@@ -47,7 +48,7 @@ class AI_model:
         10: {"desc": "wiggle (out)", "hit": False}
     }
 
-    def __init__(self, model_path="model.onnx", use_gpu=False, nb_cpu_threads=None, monitor_id=1, use_bettercam=False, bettercam_fps=240):
+    def __init__(self, model_path="model.onnx", use_gpu=False, nb_cpu_threads=None, monitor_id=1, use_bettercam=True, bettercam_fps=1000):
         self.model_path = model_path
         self.use_gpu = use_gpu
         self.nb_cpu_threads = nb_cpu_threads
@@ -113,7 +114,8 @@ class AI_model:
 
     def screenshot_to_pil(self, screenshot):
         if self.use_bettercam and self.camera is not None:
-            pil_image = Image.fromarray(screenshot)
+            #numpy
+            return screenshot 
         else:
             pil_image = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
         if pil_image.width != 224 or pil_image.height != 224:
@@ -121,7 +123,16 @@ class AI_model:
         return pil_image
 
     def pil_to_numpy(self, image_pil):
-        img = np.asarray(image_pil, dtype=np.float32) / 255.0
+        if isinstance(image_pil, np.ndarray):
+        # BetterCam path
+         if image_pil.shape[:2] != (224, 224):
+            image_pil = cv2.resize(image_pil, (224, 224), interpolation=cv2.INTER_CUBIC)
+         img = image_pil.astype(np.float32) / 255.0
+        elif isinstance(image_pil, Image.Image):
+         img = np.asarray(image_pil, dtype=np.float32) / 255.0
+        else:
+         raise TypeError("Input must be a PIL Image or numpy ndarray.")
+
         img = np.transpose(img, (2, 0, 1))
         img = (img - self.MEAN[:, None, None]) / self.STD[:, None, None]
         return np.expand_dims(img, axis=0)
