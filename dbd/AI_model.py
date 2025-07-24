@@ -1,6 +1,5 @@
 import numpy as np
 import onnxruntime as ort
-from PIL import Image
 from mss import mss
 import cv2
 
@@ -64,7 +63,7 @@ class AI_model:
                                  self.monitor["left"] + self.monitor["width"],
                                  self.monitor["top"] + self.monitor["height"])
 
-            self.bettercam_camera = bettercam.create(max_buffer_len=1)  # TODO: monitor id
+            self.bettercam_camera = bettercam.create(max_buffer_len=1, output_color="RGB")  # TODO: monitor id
             self.bettercam_camera.start(region=bettercam_monitor, target_fps=240)
 
         # Onnx model
@@ -84,36 +83,24 @@ class AI_model:
         else:
             self.load_onnx()
 
-    def grab_screenshot(self):
+    def grab_screenshot(self) -> np.ndarray:
+        """
+        Grab a screenshot from the monitor or BetterCam camera.
+        Returns:
+            np.ndarray: The screenshot as a numpy array of shape (224x224x3) in RGB format.
+        """
+
         if self.bettercam_camera is not None:
-            return self.bettercam_camera.get_latest_frame()
+            screenshot_np = self.bettercam_camera.get_latest_frame()
         else:
-            return self.mss.grab(self.monitor)
+            screenshot = self.mss.grab(self.monitor)
+            screenshot_np = np.array(screenshot, dtype=np.uint8)
+            screenshot_np = np.flip(screenshot_np[:, :, :3], 2)  # Convert BGRA to RGB
 
-    def screenshot_to_pil(self, screenshot):
-        if self.bettercam_camera is not None:
-            #numpy
-            return screenshot 
-        else:
-            pil_image = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
-        if pil_image.width != 224 or pil_image.height != 224:
-            pil_image = pil_image.resize((224, 224), Image.Resampling.BICUBIC)
-        return pil_image
+        if screenshot_np.shape[:2] != (224, 224):
+            screenshot_np = cv2.resize(screenshot_np, (224, 224), interpolation=cv2.INTER_CUBIC)  # cv2 expects BGR, but resize with RGB is fine
 
-    def pil_to_numpy(self, image_pil):
-        if isinstance(image_pil, np.ndarray):
-        # BetterCam path
-         if image_pil.shape[:2] != (224, 224):
-            image_pil = cv2.resize(image_pil, (224, 224), interpolation=cv2.INTER_CUBIC)
-         img = image_pil.astype(np.float32) / 255.0
-        elif isinstance(image_pil, Image.Image):
-         img = np.asarray(image_pil, dtype=np.float32) / 255.0
-        else:
-         raise TypeError("Input must be a PIL Image or numpy ndarray.")
-
-        img = np.transpose(img, (2, 0, 1))
-        img = (img - self.MEAN[:, None, None]) / self.STD[:, None, None]
-        return np.expand_dims(img, axis=0)
+        return screenshot_np
 
     def softmax(self, x):
         exp_x = np.exp(x - np.max(x))
@@ -174,8 +161,16 @@ class AI_model:
         self.bindings = [p_input, p_output]
         self.stream = cuda.Stream()
 
-    def predict(self, img_np):
-        img_np = np.ascontiguousarray(img_np)
+    def _preprocess_image_for_inference(self, img_np: np.ndarray):
+        img = np.asarray(img_np, dtype=np.float32) / 255.0
+        img = np.transpose(img, (2, 0, 1))  # (H,W,C) to (C,H,W) i.e. channel first format
+        img = (img - self.MEAN[:, None, None]) / self.STD[:, None, None]
+        img = np.expand_dims(img, axis=0)
+        img = np.ascontiguousarray(img)
+        return img
+
+    def predict(self, img_np: np.ndarray):
+        img_np = self._preprocess_image_for_inference(img_np)
 
         if self.engine:
             output = np.empty(self.tensor_shapes[1], dtype=np.float32)

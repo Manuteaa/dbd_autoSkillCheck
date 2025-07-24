@@ -51,7 +51,7 @@ def infer_from_folder_onnx(folder, model_path, use_gpu=True, nb_cpu_threads=1, c
         bottom = top + 224
         img = img.crop((left, top, right, bottom))
 
-        img = ai_model.pil_to_numpy(img)
+        img = np.asarray(img)
         pred, _, _, _ = ai_model.predict(img)
 
         pred_folder = str(pred)

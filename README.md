@@ -69,7 +69,7 @@ This is the recommended method to run the AI model. You don't need to install an
 Use this method if you have some experience with Python and if you want to customize the code. This is also the only way to run the code using your GPU device (see [FAQ](#faq)).
 
 1) Create your own python env (for example using python 3.12) 
-2) Install the minimal necessary libraries using the command: `pip install numpy mss onnxruntime pyautogui IPython pillow gradio`
+2) Install the minimal necessary libraries using the command: `pip install numpy mss onnxruntime pyautogui IPython pillow gradio opencv-python`
 3) git clone the repo or download the source code (zip)
 4) Run `python app.py` to start the AI model web UI
 5) Follow the [next instructions](#auto-skill-check-web-ui)

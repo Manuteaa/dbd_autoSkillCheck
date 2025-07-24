@@ -52,12 +52,10 @@ def monitor(ai_model_path, device, monitor_id, hit_ante, nb_cpu_threads):
 
     try:
         while True:
-            screenshot = ai_model.grab_screenshot()
-            image_pil = ai_model.screenshot_to_pil(screenshot)
-            image_np = ai_model.pil_to_numpy(image_pil)
+            frame_np = ai_model.grab_screenshot()
             nb_frames += 1
 
-            pred, desc, probs, should_hit = ai_model.predict(image_np)
+            pred, desc, probs, should_hit = ai_model.predict(frame_np)
 
             if should_hit:
                 # ante-frontier hit delay
@@ -68,7 +66,7 @@ def monitor(ai_model_path, device, monitor_id, hit_ante, nb_cpu_threads):
                 sleep(0.005)
                 ReleaseKey(SPACE)
 
-                yield gr.skip(), image_pil, probs
+                yield gr.skip(), frame_np, probs
 
                 sleep(0.5)  # avoid hitting the same skill check multiple times
                 t0 = time()
@@ -85,6 +83,7 @@ def monitor(ai_model_path, device, monitor_id, hit_ante, nb_cpu_threads):
                 nb_frames = 0
 
     except Exception as e:
+        print(f"Error during monitoring: {e}")
         pass
     finally:
         print("Monitoring stopped.")
@@ -133,17 +132,17 @@ if __name__ == "__main__":
 
             with gr.Column(variant="panel"):
                 fps = gr.Number(label="AI model FPS", info=fps_info, interactive=False)
-                image_pil = gr.Image(label="Last hit skill check frame", height=224, interactive=False)
+                image_visu = gr.Image(label="Last hit skill check frame", height=224, interactive=False)
                 probs = gr.Label(label="Skill check AI recognition")
 
         monitoring = run_button.click(
             fn=monitor, 
             inputs=[ai_model_path, device, monitor_id, hit_ante, cpu_stress],
-            outputs=[fps, image_pil, probs]
+            outputs=[fps, image_visu, probs]
         )
 
         stop_button.click(fn=cleanup, inputs=None, outputs=fps)
-        monitor_id.blur(fn=switch_monitor_cb, inputs=monitor_id, outputs=image_pil)  # triggered when selection is closed
+        monitor_id.blur(fn=switch_monitor_cb, inputs=monitor_id, outputs=image_visu)  # triggered when selection is closed
 
     try:
         webui.launch()
