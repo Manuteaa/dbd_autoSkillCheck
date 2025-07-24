@@ -2,6 +2,7 @@ import numpy as np
 import onnxruntime as ort
 from PIL import Image
 from mss import mss
+import cv2 
 
 from dbd.utils.monitor import get_monitor_attributes
 
@@ -13,7 +14,6 @@ except ImportError as e:
     torch_ok = False
     print("Info: torch library not found. You must use onnx AI model with CPU mode for inference.")
 
-
 try:
     import tensorrt as trt
     import pycuda.driver as cuda
@@ -23,6 +23,12 @@ except ImportError as e:
     trt_ok = False
     print("Info: tensorRT or pycuda library not found.")
 
+# Optional BetterCam support
+try:
+    import bettercam
+    bettercam_ok = True
+except ImportError:
+    bettercam_ok = False
 
 class AI_model:
     MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
@@ -42,12 +48,20 @@ class AI_model:
         10: {"desc": "wiggle (out)", "hit": False}
     }
 
-    def __init__(self, model_path="model.onnx", use_gpu=False, nb_cpu_threads=None, monitor_id=1):
+    def __init__(self, model_path="model.onnx", use_gpu=False, nb_cpu_threads=None, monitor_id=1, use_bettercam=True, bettercam_fps=1000):
         self.model_path = model_path
         self.use_gpu = use_gpu
         self.nb_cpu_threads = nb_cpu_threads
+        self.use_bettercam = use_bettercam and bettercam_ok
+
         self.mss = mss()
         self.monitor = get_monitor_attributes(monitor_id, crop_size=224)
+
+        # Only create bettercam camera if requested and available
+        self.camera = bettercam.create(max_buffer_len=1) if self.use_bettercam else None
+        self.bettercam_started = False
+        self.bettercam_fps = bettercam_fps
+        self.region = None  # Region for center crop
 
         # Onnx model
         self.ort_session = None
@@ -66,17 +80,59 @@ class AI_model:
         else:
             self.load_onnx()
 
+    def bettercam_region(self):
+        # Only need to do this once
+        if self.region is not None:
+            return
+        # Get full frame to determine size
+        frame = self.camera.grab()
+        if frame is None:
+            raise RuntimeError("BetterCam: No initial frame.")
+        height, width, _ = frame.shape
+        crop_size = 224
+        object_size_h_ratio = crop_size / 1080  
+        object_size = int(object_size_h_ratio * height)
+        left = (width // 2) - (object_size // 2)
+        top = (height // 2) - (object_size // 2)
+        right = left + object_size
+        bottom = top + object_size
+        self.region = (left, top, right, bottom)
+
     def grab_screenshot(self):
-        return self.mss.grab(self.monitor)
+        if self.use_bettercam and self.camera is not None:
+            if not self.bettercam_started:
+                self.bettercam_region()
+                self.camera.start(region=self.region, target_fps=self.bettercam_fps)
+                self.bettercam_started = True
+            # get the latest frame 
+            frame = self.camera.get_latest_frame()
+            if frame is None:
+                raise RuntimeError("BetterCam: No latest frame. Try updating the screen.")
+            return frame
+        else:
+            return self.mss.grab(self.monitor)
 
     def screenshot_to_pil(self, screenshot):
-        pil_image = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
+        if self.use_bettercam and self.camera is not None:
+            #numpy
+            return screenshot 
+        else:
+            pil_image = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
         if pil_image.width != 224 or pil_image.height != 224:
             pil_image = pil_image.resize((224, 224), Image.Resampling.BICUBIC)
         return pil_image
 
     def pil_to_numpy(self, image_pil):
-        img = np.asarray(image_pil, dtype=np.float32) / 255.0
+        if isinstance(image_pil, np.ndarray):
+        # BetterCam path
+         if image_pil.shape[:2] != (224, 224):
+            image_pil = cv2.resize(image_pil, (224, 224), interpolation=cv2.INTER_CUBIC)
+         img = image_pil.astype(np.float32) / 255.0
+        elif isinstance(image_pil, Image.Image):
+         img = np.asarray(image_pil, dtype=np.float32) / 255.0
+        else:
+         raise TypeError("Input must be a PIL Image or numpy ndarray.")
+
         img = np.transpose(img, (2, 0, 1))
         img = (img - self.MEAN[:, None, None]) / self.STD[:, None, None]
         return np.expand_dims(img, axis=0)
@@ -178,6 +234,12 @@ class AI_model:
             self.cuda_context.pop()
             self.cuda_context = None
             print("Info: Cuda context released")
+
+        # Stop BetterCam if used
+        if self.use_bettercam and self.camera is not None and self.bettercam_started:
+           self.camera.release()
+           self.bettercam_started = False
+           self.camera = None
 
     def __enter__(self):
         return self
