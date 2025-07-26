@@ -20,7 +20,7 @@ if __name__ == '__main__':
             # Infinite loop
             print("Starting to save frames in folder: {}".format(dataset_folder))
             while True:
-                screenshot = mon._get_frame()
+                screenshot = mon.get_raw_frame()
                 output_file = os.path.join(dataset_folder, "{:05d}.png".format(i))
                 to_png(screenshot.rgb, screenshot.size, output=output_file)
 

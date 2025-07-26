@@ -23,9 +23,7 @@ try:
     import bettercam
     from dbd.utils.monitoring_bettercam import Monitoring_bettercam
     bettercam_ok = True
-    print("Info: Bettercam feature enabled.")
-    # print(bettercam.device_info())
-    # print(bettercam.output_info())
+    print("Info: Bettercam feature available.")
 except ImportError:
     bettercam_ok = False
 
@@ -86,12 +84,7 @@ class AI_model:
             np.ndarray: The screenshot as a numpy array of shape (224x224x3) in RGB format.
         """
 
-        screenshot_np = self.monitor.get_frame_np()
-
-        if screenshot_np.shape[:2] != (224, 224):
-            screenshot_np = cv2.resize(screenshot_np, (224, 224), interpolation=cv2.INTER_CUBIC)  # cv2 expects BGR, but resize with RGB is fine
-
-        return screenshot_np
+        return self.monitor.get_frame_np()
 
     def softmax(self, x):
         exp_x = np.exp(x - np.max(x))
