@@ -4,11 +4,18 @@ from PIL import Image
 
 
 class Monitoring:
+    def start(self):
+        raise NotImplementedError("Must override start")
+
+    def stop(self):
+        raise NotImplementedError("Must override stop")
+
     def __enter__(self):
-        raise NotImplementedError("Must override __enter__")
+        self.start()
+        return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        raise NotImplementedError("Must override __exit__")
+        self.stop()
 
     def get_frame_pil(self):
         raise NotImplementedError("Must override get_frame_pil")
@@ -60,19 +67,21 @@ class Monitoring:
 class Monitoring_mss(Monitoring):
     def __init__(self, monitor_id=1, crop_size=224):
         super().__init__()
-        self.monitor_id = monitor_id
-        self.crop_size = crop_size
-
-    def __enter__(self):
-        self.monitor_region = self._get_monitor_region(self.monitor_id, self.crop_size, offset=True)
-        self.sct = mss()
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.sct.close()
+        self.monitor_region = self._get_monitor_region(monitor_id, crop_size, offset=True)
         self.sct = None
 
+    def start(self):
+        self.sct = mss()
+
+    def stop(self):
+        if self.sct is not None:
+            self.sct.close()
+            self.sct = None
+
     def _get_frame(self):
+        if self.sct is None:
+            raise RuntimeError("Monitoring_mss not started. Call start() before grabbing frames.")
+
         return self.sct.grab(self.monitor_region)
 
     def get_frame_pil(self) -> Image:
@@ -83,5 +92,5 @@ class Monitoring_mss(Monitoring):
     def get_frame_np(self) -> np.ndarray:
         frame = self._get_frame()
         frame = np.array(frame, dtype=np.uint8)
-        frame = np.flip(frame[:, :, :3], 2)
+        frame = np.flip(frame[:, :, :3], 2)  # Convert BGRA to RGB
         return frame
