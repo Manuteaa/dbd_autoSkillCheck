@@ -5,7 +5,7 @@ import gradio as gr
 
 from dbd.AI_model import AI_model
 from dbd.utils.directkeys import PressKey, ReleaseKey, SPACE
-from dbd.utils.monitor import get_monitors, get_monitor_attributes, get_frame
+from dbd.utils.monitoring_mss import Monitoring_mss
 
 ai_model = None
 def cleanup():
@@ -83,7 +83,7 @@ def monitor(ai_model_path, device, monitor_id, hit_ante, nb_cpu_threads):
                 nb_frames = 0
 
     except Exception as e:
-        print(f"Error during monitoring: {e}")
+        # print(f"Error during monitoring: {e}")
         pass
     finally:
         print("Monitoring stopped.")
@@ -102,10 +102,10 @@ if __name__ == "__main__":
         raise gr.Error(f"No AI model found in {models_folder}/", duration=0)
 
     # Monitor selection
-    monitor_choices = get_monitors()
+    monitor_choices = Monitoring_mss.get_monitors_info()
     def switch_monitor_cb(monitor_id):
-        monitor = get_monitor_attributes(monitor_id, crop_size=520)  # 520x520 center-crop, just for the debug display
-        return get_frame(monitor)
+        with Monitoring_mss(monitor_id, crop_size=520) as monitor:
+            return monitor.get_frame_np()
 
     with (gr.Blocks(title="Auto skill check") as webui):
         gr.Markdown("<h1 style='text-align: center;'>DBD Auto skill check</h1>", elem_id="title")

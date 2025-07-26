@@ -1,9 +1,8 @@
 import numpy as np
 import onnxruntime as ort
-from mss import mss
 import cv2
 
-from dbd.utils.monitor import get_monitor_attributes
+from dbd.utils.monitoring_mss import Monitoring_mss
 
 try:
     import torch
@@ -22,7 +21,9 @@ except ImportError:
 
 try:
     import bettercam
+    from dbd.utils.monitoring_bettercam import Monitoring_bettercam
     bettercam_ok = True
+    print("Info: Bettercam feature enabled.")
     # print(bettercam.device_info())
     # print(bettercam.output_info())
 except ImportError:
@@ -52,19 +53,14 @@ class AI_model:
         self.use_gpu = use_gpu
         self.nb_cpu_threads = nb_cpu_threads
 
-        self.mss = mss()
-        self.monitor = get_monitor_attributes(monitor_id, crop_size=224)
-
-        # Bettercam feature
-        self.bettercam_camera = None
+        # Screen monitoring
+        self.monitor = None
         if use_bettercam and bettercam_ok:
-            bettercam_monitor = (self.monitor["left"],
-                                 self.monitor["top"],
-                                 self.monitor["left"] + self.monitor["width"],
-                                 self.monitor["top"] + self.monitor["height"])
+            self.monitor = Monitoring_bettercam(monitor_id=monitor_id, crop_size=224, target_fps=240)
+        else:
+            self.monitor = Monitoring_mss(monitor_id=monitor_id, crop_size=224)
 
-            self.bettercam_camera = bettercam.create(max_buffer_len=1, output_color="RGB")  # TODO: monitor id
-            self.bettercam_camera.start(region=bettercam_monitor, target_fps=240)
+        self.monitor.start()
 
         # Onnx model
         self.ort_session = None
@@ -90,12 +86,7 @@ class AI_model:
             np.ndarray: The screenshot as a numpy array of shape (224x224x3) in RGB format.
         """
 
-        if self.bettercam_camera is not None:
-            screenshot_np = self.bettercam_camera.get_latest_frame()
-        else:
-            screenshot = self.mss.grab(self.monitor)
-            screenshot_np = np.array(screenshot, dtype=np.uint8)
-            screenshot_np = np.flip(screenshot_np[:, :, :3], 2)  # Convert BGRA to RGB
+        screenshot_np = self.monitor.get_frame_np()
 
         if screenshot_np.shape[:2] != (224, 224):
             screenshot_np = cv2.resize(screenshot_np, (224, 224), interpolation=cv2.INTER_CUBIC)  # cv2 expects BGR, but resize with RGB is fine
@@ -198,6 +189,9 @@ class AI_model:
         self.context = None
         self.engine = None
 
+        self.monitor.stop()
+        self.monitor = None
+
         if self.bindings:
             for binding in self.bindings:
                 binding.free()
@@ -207,11 +201,6 @@ class AI_model:
             self.cuda_context.pop()
             self.cuda_context = None
             print("Info: Cuda context released")
-
-        if self.bettercam_camera:
-            self.bettercam_camera.stop()
-            del self.bettercam_camera
-            self.bettercam_camera = None
 
     def __enter__(self):
         return self

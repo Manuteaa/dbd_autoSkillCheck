@@ -3,7 +3,7 @@ import mss.tools
 import time
 import os
 
-from dbd.utils.monitor import get_monitor_attributes
+from dbd.utils.monitoring_mss import Monitoring_mss
 
 
 if __name__ == '__main__':
@@ -12,24 +12,23 @@ if __name__ == '__main__':
     os.mkdir(dataset_folder)
 
     # Get monitor attributes
-    monitor = get_monitor_attributes(crop_size=320)
+    with Monitoring_mss(crop_size=320) as mon:
 
-    try:
-        with mss.mss() as sct:
+        try:
             i = 0
 
             # Infinite loop
             print("Starting to save frames in folder: {}".format(dataset_folder))
             while True:
-                screenshot = sct.grab(monitor)
+                screenshot = mon._get_frame()
                 output_file = os.path.join(dataset_folder, "{:05d}.png".format(i))
                 to_png(screenshot.rgb, screenshot.size, output=output_file)
 
                 i += 1
 
-    except KeyboardInterrupt:
-        print("\nCapture stopped.")
+        except KeyboardInterrupt:
+            print("\nCapture stopped.")
 
-        if output_file and os.path.exists(output_file):
-            os.remove(output_file)
-            print("Last file removed: {} (may be corrupted)".format(output_file))
+            if output_file and os.path.exists(output_file):
+                os.remove(output_file)
+                print("Last file removed: {} (may be corrupted)".format(output_file))
