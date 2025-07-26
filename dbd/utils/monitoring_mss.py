@@ -4,10 +4,10 @@ from PIL import Image
 
 
 class Monitoring:
-    def __enter__(self, *args):
+    def __enter__(self):
         raise NotImplementedError("Must override __enter__")
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_value, traceback):
         raise NotImplementedError("Must override __exit__")
 
     def get_frame_pil(self):
@@ -15,17 +15,6 @@ class Monitoring:
 
     def get_frame_np(self):
         raise NotImplementedError("Must override get_frame_np")
-
-
-class Monitoring_mss(Monitoring):
-    def __enter__(self, monitor_region):
-        self.monitor_region = monitor_region
-        self.sct = mss()
-        return self
-
-    def __exit__(self):
-        self.sct.close()
-        self.sct = None
 
     @staticmethod
     def get_monitors_info():
@@ -35,7 +24,7 @@ class Monitoring_mss(Monitoring):
             return monitor_choices
 
     @staticmethod
-    def get_monitor_region(monitor_id=1, crop_size=224, offset=True):
+    def _get_monitor_region(monitor_id=1, crop_size=224, offset=True):
         """
         Get the region of the monitor to capture based on the monitor ID and crop size.
         The crop size region is size 224x224 centered on the monitor IF monitor resolution is 1920x1080.
@@ -44,7 +33,7 @@ class Monitoring_mss(Monitoring):
         Args:
             monitor_id (int): The ID of the monitor to capture.
             crop_size (int): The size of the crop (default is 224).
-            offset (bool): Whether to apply monitor id offset (must be True to compute regions in mss convention).
+            offset (bool): Whether to apply monitor id offset (must be True to compute regions in mss convention, False otherwise).
         Returns:
             dict: (top, left, width, height)
         """
@@ -66,6 +55,22 @@ class Monitoring_mss(Monitoring):
                 region["left"] += monitor["left"]
 
             return region
+
+
+class Monitoring_mss(Monitoring):
+    def __init__(self, monitor_id=1, crop_size=224):
+        super().__init__()
+        self.monitor_id = monitor_id
+        self.crop_size = crop_size
+
+    def __enter__(self):
+        self.monitor_region = self._get_monitor_region(self.monitor_id, self.crop_size, offset=True)
+        self.sct = mss()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.sct.close()
+        self.sct = None
 
     def _get_frame(self):
         return self.sct.grab(self.monitor_region)
