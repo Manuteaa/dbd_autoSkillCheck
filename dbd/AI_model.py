@@ -54,7 +54,7 @@ class AI_model:
         # Screen monitoring
         self.monitor = None
         if use_bettercam and bettercam_ok:
-            self.monitor = Monitoring_bettercam(monitor_id=monitor_id, crop_size=224, target_fps=240)
+            self.monitor = Monitoring_bettercam(monitor_id=monitor_id-1, crop_size=224, target_fps=150)
         else:
             self.monitor = Monitoring_mss(monitor_id=monitor_id, crop_size=224)
 
