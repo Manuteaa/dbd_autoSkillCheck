@@ -2,12 +2,12 @@
 
 **This project is intended for research and educational purposes in the field of deep learning and how computer vision AI can help in video games.**
 
-Using it may violate game rules and trigger anti-cheat detection. The author is not responsible for any consequences resulting from its use, this includes bans or any other unspecified violations. Use at your own risk. Join the [discord server](#acknowledgments) for more info.
+Using it may violate game rules and trigger anti-cheat detection. The author is not responsible for any consequences resulting from its use, this includes bans or any other unspecified violations. Use at your own risk. Join the [discord server](#acknowledgments) for more details about how to test it, after accepting the fair-use agreement.
 
 # DBD Auto Skill Check
 
-The Dead by Daylight Auto Skill Check is a tool developed using AI (deep learning with PyTorch) to automatically detect and successfully hit skill checks in the popular game Dead by Daylight. 
-This tool is designed to demonstrate how AI can improve gameplay performance and enhance the player's success rate in the game. 
+The Dead by Daylight Auto Skill Check is a tool developed using AI (deep learning with PyTorch) to automatically detect and successfully hit skill checks in the popular game Dead by Daylight.
+This tool is designed to demonstrate how AI can improve gameplay performance and enhance the player's success rate in the game.
 
 
 | Demo (x2 speed) |
@@ -20,18 +20,18 @@ This tool is designed to demonstrate how AI can improve gameplay performance and
 * [DBD Auto Skill Check](#dbd-auto-skill-check)
 * [Features](#features)
 * [Execution Instructions](#execution-instructions)
-  * [Get the code](#get-the-code)
-    * [Python embedded app (RECOMMENDED)](#python-embedded-app-recommended)
-    * [Build from source](#build-from-source)
-    * [Windows compiled app](#windows-compiled-app)
-  * [Auto skill-check Web UI](#auto-skill-check-web-ui)
+    * [Get the code](#get-the-code)
+        * [Python embedded app (RECOMMENDED)](#python-embedded-app-recommended)
+        * [Build from source](#build-from-source)
+        * [Windows compiled app](#windows-compiled-app)
+    * [Auto skill-check Web UI](#auto-skill-check-web-ui)
 * [Project details](#project-details)
-  * [What is a skill check](#what-is-a-skill-check)
-  * [Dataset](#dataset)
-  * [Architecture](#architecture)
-  * [Training](#training)
-  * [Inference](#inference)
-  * [Results](#results)
+    * [What is a skill check](#what-is-a-skill-check)
+    * [Dataset](#dataset)
+    * [Architecture](#architecture)
+    * [Training](#training)
+    * [Inference](#inference)
+    * [Results](#results)
 * [FAQ](#faq)
 * [Acknowledgments](#acknowledgments)
 <!-- TOC -->
@@ -68,7 +68,7 @@ This is the recommended method to run the AI model. You don't need to install an
 
 Use this method if you have some experience with Python and if you want to customize the code. This is also the only way to run the code using your GPU device (see [FAQ](#faq)).
 
-1) Create your own python env (for example using python 3.12) 
+1) Create your own python env (for example using python 3.12)
 2) Install the minimal necessary libraries using the command: `pip install numpy mss onnxruntime pyautogui IPython pillow gradio opencv-python`
 3) git clone the repo or download the source code (zip)
 4) Run `python app.py` to start the AI model web UI
@@ -118,10 +118,10 @@ On the right of the web UI, we display :
 A skill check is a game mechanic in Dead by Daylight that allows the player to progress faster in a specific action such as repairing generators or healing teammates.
 It occurs randomly and requires players to press the space bar to stop the progression of a red cursor.
 
-Skill checks can be: 
+Skill checks can be:
 - failed, if the cursor misses the designated white zone (the hit area)
-- successful, if the cursor lands in the white zone 
-- or greatly successful, if the cursor accurately hits the white-filled zone 
+- successful, if the cursor lands in the white zone
+- or greatly successful, if the cursor accurately hits the white-filled zone
 
 Here are examples of different great skill checks:
 
@@ -129,7 +129,7 @@ Here are examples of different great skill checks:
 |:-------------------------------:|:-------------------------------:|:-----------------------------------:|:-------------------------------------:|
 | ![](images/repair.png "repair") | ![](images/wiggle.png "wiggle") | ![](images/struggle.png "struggle") | ![](images/merciless.png "merciless") |
 
-Successfully hitting a skill check increases the speed of the corresponding action, and a greatly successful skill check provides even greater rewards. 
+Successfully hitting a skill check increases the speed of the corresponding action, and a greatly successful skill check provides even greater rewards.
 On the other hand, missing a skill check reduces the action's progression speed and alerts the ennemi with a loud sound.
 
 
@@ -150,9 +150,9 @@ We developed a customized and optimized dataloader that automatically parses the
 Our data loaders use a custom sampler to handle imbalanced data.
 
 ## Architecture
-The skill check detection system is based on an encoder-decoder architecture. 
+The skill check detection system is based on an encoder-decoder architecture.
 
-We employ the MobileNet V3 Small architecture, specifically chosen for its trade-off between inference speed and accuracy. 
+We employ the MobileNet V3 Small architecture, specifically chosen for its trade-off between inference speed and accuracy.
 This ensures real-time inference and quick decision-making without compromising detection precision.
 We also compared the architecture with the MobileNet V3 Large, but the accuracy gain was not worth a bigger model size (20Mo instead of 6Mo) and slower inference speed.
 
@@ -169,10 +169,10 @@ I trained the model using my own computer, and using the AWS _g6.4xlarge_ EC2 in
 We provide a script that loads the trained model and monitors the main screen.
 For each sampled frame, the script will center-crop and normalize the image then feed it to the AI model.
 
-Following the result of the skill check recognition, the script will automatically press the space bar to trigger the great skill check (or not), 
+Following the result of the skill check recognition, the script will automatically press the space bar to trigger the great skill check (or not),
 then it waits for a short period of time to avoid triggering the same skill check multiple times in a row.
 
-To achieve real time results, we convert the model to ONNX format and use the ONNX runtime to perform inference. 
+To achieve real time results, we convert the model to ONNX format and use the ONNX runtime to perform inference.
 We observed a 1.5x to 2x speedup compared to baseline inference.
 
 ## Results
@@ -194,7 +194,7 @@ We test our model using a testing dataset of ~2000 images:
 | 10             | wiggle (out)                | 98.3%         |
 
 
-During our laptop testing, we observed rapid inference times of approximately 10ms per frame using MobileNet V3 Small. 
+During our laptop testing, we observed rapid inference times of approximately 10ms per frame using MobileNet V3 Small.
 When combined with our screen monitoring script, we achieved a consistent 60fps detection rate, which is enough for real-time detection capabilities.
 
 In conclusion, our model achieves high accuracy thanks to the high-quality dataset with effective data augmentation techniques, and architectural choices.
@@ -203,7 +203,7 @@ In conclusion, our model achieves high accuracy thanks to the high-quality datas
 # FAQ
 
 **What about the anti-cheat system ?**
-- The script monitors a small crop of your main screen, processes it using an onnx model, and can press then release the space bar using [Windows MSDN](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes?redirectedfrom=MSDN) once each 0.5s maximum. This win32 `SendInput` injection key can be considered as an "unfair advantage" by EAC, potentially leading to a ban. For this reason, the script should only be used in private games. However, if you still wish to use it in public matches, you can join the Discord server for more details. These specifics will not be shared publicly.
+- The script monitors a small crop of your main screen, processes it using an onnx model, and can press then release the space bar using [Windows MSDN](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes?redirectedfrom=MSDN) once each 0.5s maximum. This win32 `SendInput` injection key can be considered as an "unfair advantage" by EAC, potentially leading to a ban. For this reason, the script should only be used in private games. However, if you still wish to use it in public matches, you can join the Discord server for more details. These specifics will not be shared publicly and will only be available after accepting the fair-use agreement.
 
 **How to run the AI model with your GPU (NVIDIA - CUDA)?**
 - Uninstall `onnxruntime` then install `onnxruntime-gpu`
