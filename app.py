@@ -74,9 +74,9 @@ def monitor(ai_model_path, device, monitoring_str, monitor_id, hit_ante, nb_cpu_
                 if pred == 2 and hit_ante > 0:
                     sleep(hit_ante * 0.001)
 
-                # PressKey(SPACE)
-                # sleep(0.005)
-                # ReleaseKey(SPACE)
+                PressKey(SPACE)
+                sleep(0.005)
+                ReleaseKey(SPACE)
 
                 yield gr.skip(), frame_np, probs
 

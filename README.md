@@ -213,6 +213,7 @@ In conclusion, our model achieves high accuracy thanks to the high-quality datas
 - Install [torch](https://pytorch.org/get-started/locally/) with CUDA compute
 - Select "GPU" in the Auto skill check webUI, click "RUN"
 - Install last version of MSVC if you encounter an error
+- _Note for advanced users: We also provide a tensorRT model support. Install the necessary tensorRT libs, convert the .onnx model into an optimized .trt model and select it with GPU mode from the WebUI._ 
 
 **How to run the AI model with your GPU (AMD - DirectML)**
 - Uninstall `onnxruntime` then install `onnxruntime-directml`
@@ -222,12 +223,13 @@ In conclusion, our model achieves high accuracy thanks to the high-quality datas
 - Your game FPS >= 60
 - The AI model FPS >= 60
 - Your ping is not too high (<= 60 should be fine)
-- Use standard game settings (I recommend using 1080p at 100% resolution without any game filters, no vsync, no FSR)
+- Use standard game settings (resolution 1920x1080 with 100% scalefor both game and monitor, without any game filters/reshade, no vsync, no FSR)
 - In the `Features options` of the WebUI, decrease (closer to 0) the `Ante-frontier hit delay` value
 
 **I have lower values than 60 FPS for the AI model, what can I do ?**
 - In the `Features options` of the WebUI, increase the `CPU workload` option
-- Switch your resolution to 1920x1080 at 100% scale
+- Set both your monitor & game resolution to 1920x1080 at 100% scale
+- Increase all your monitors refresh rate to 60Hz or more
 - Switch device to gpu
 - Run the script in administrator mode or with a higher priority in the task manager
 
