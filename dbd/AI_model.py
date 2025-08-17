@@ -1,8 +1,7 @@
 import numpy as np
 import onnxruntime as ort
-import cv2
 
-from dbd.utils.monitoring_mss import Monitoring_mss
+from dbd.utils.monitoring_mss import Monitoring, Monitoring_mss
 
 try:
     import torch
@@ -18,14 +17,6 @@ try:
     print("Info: tensorRT and pycuda library found.")
 except ImportError:
     trt_ok = False
-
-try:
-    import bettercam
-    from dbd.utils.monitoring_bettercam import Monitoring_bettercam
-    bettercam_ok = True
-    print("Info: Bettercam feature available.")
-except ImportError:
-    bettercam_ok = False
 
 
 class AI_model:
@@ -46,18 +37,13 @@ class AI_model:
         10: {"desc": "wiggle (out)", "hit": False}
     }
 
-    def __init__(self, model_path="model.onnx", use_gpu=False, nb_cpu_threads=None, monitor_id=1, use_bettercam=False):
+    def __init__(self, model_path="model.onnx", use_gpu=False, nb_cpu_threads=None, monitoring: Monitoring = None):
         self.model_path = model_path
         self.use_gpu = use_gpu
         self.nb_cpu_threads = nb_cpu_threads
 
         # Screen monitoring
-        self.monitor = None
-        if use_bettercam and bettercam_ok:
-            self.monitor = Monitoring_bettercam(monitor_id=monitor_id, crop_size=224, target_fps=240)
-        else:
-            self.monitor = Monitoring_mss(monitor_id=monitor_id, crop_size=224)
-
+        self.monitor = monitoring if monitoring else Monitoring_mss(crop_size=224)
         self.monitor.start()
 
         # Onnx model

@@ -4,8 +4,7 @@ import bettercam
 from PIL import Image
 
 from dbd.utils.monitoring_mss import Monitoring
-
-BETTERCAM_MONITORS = bettercam.__factory.outputs[0]
+FACTORY = bettercam.__factory
 
 
 class Monitoring_bettercam(Monitoring):
@@ -26,14 +25,14 @@ class Monitoring_bettercam(Monitoring):
 
     @staticmethod
     def get_monitors_info():
-        monitors = BETTERCAM_MONITORS
+        monitors = FACTORY.outputs[0]
         monitor_choices = [(f"Monitor {i}: {m.resolution}", i) for i, m in enumerate(monitors)]
         return monitor_choices
 
     @staticmethod
     def _get_monitor_region(monitor_id=0, crop_size=224):
-        monitor = BETTERCAM_MONITORS[monitor_id]
-        w, h = monitor.resolution
+        monitors = FACTORY.outputs[0]
+        w, h = monitors[monitor_id].resolution  # Note: does not handle scaling setting
 
         object_size_h_ratio = crop_size / 1080
         object_size = int(object_size_h_ratio * h)
