@@ -2,9 +2,13 @@ import os
 import tqdm
 import cv2
 import numpy as np
+import glob
 
 
-def delete_similar_images(files):
+def delete_similar_images(folder):
+    files = glob.glob(os.path.join(folder, "*.*"))
+    files.sort()
+
     similar_frames = 0
     for i in tqdm.tqdm(range(len(files)-1)):
         im1 = files[i]
@@ -26,7 +30,10 @@ def delete_similar_images(files):
     print("deleted {} similar frames".format(similar_frames))
 
 
-def delete_consecutive_images(files, n):
+def delete_consecutive_images(folder, n):
+    files = glob.glob(os.path.join(folder, "*.*"))
+    files.sort()
+
     files_chunks = [files[i:i+n] for i in range(0, len(files), n)]
 
     # iterate over files_chunks with a tqdm progress bar

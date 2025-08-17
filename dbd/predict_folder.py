@@ -36,6 +36,8 @@ def infer_from_folder_onnx(folder, model_path, use_gpu=True, nb_cpu_threads=1, c
 
     images = sorted(glob(os.path.join(folder, "*.*")))
     ai_model = AI_model(model_path=model_path, use_gpu=use_gpu, nb_cpu_threads=nb_cpu_threads)
+    print(f"Using {ai_model.check_provider()} for inference")
+    ai_model.monitor.stop()
 
     results = []
     for image in tqdm.tqdm(images):
@@ -64,7 +66,7 @@ def infer_from_folder_onnx(folder, model_path, use_gpu=True, nb_cpu_threads=1, c
 
 
 if __name__ == '__main__':
-    folder = "tests/"
+    folder = "20250814-112924/"
 
     for idx in range(0, 12):
         pred_folder = os.path.join(folder, str(idx))
