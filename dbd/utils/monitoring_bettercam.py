@@ -9,7 +9,7 @@ BETTERCAM_MONITORS = bettercam.__factory.outputs[0]
 
 
 class Monitoring_bettercam(Monitoring):
-    def __init__(self, monitor_id=0, crop_size=224, target_fps=240):
+    def __init__(self, monitor_id=0, crop_size=224, target_fps=150):
         super().__init__()
         self.crop_size = crop_size
         self.target_fps = target_fps
@@ -18,7 +18,7 @@ class Monitoring_bettercam(Monitoring):
         self.bettercam_camera = bettercam.create(max_buffer_len=1, output_color="RGB", output_idx=monitor_id)
 
     def start(self):
-        self.bettercam_camera.start(region=self.monitor_region, target_fps=self.target_fps)
+        self.bettercam_camera.start(target_fps=self.target_fps)
 
     def stop(self):
         self.bettercam_camera.stop()
@@ -51,8 +51,13 @@ class Monitoring_bettercam(Monitoring):
 
     def get_frame_np(self) -> np.ndarray:
         frame = self.bettercam_camera.get_latest_frame()
+        frame = self.crop_frame(frame, self.monitor_region)
 
         if frame.shape[:2] != (self.crop_size, self.crop_size):
             frame = cv2.resize(frame, (self.crop_size, self.crop_size), interpolation=cv2.INTER_CUBIC)
 
         return frame
+    
+    def crop_frame(self, frame, region):
+        left, top, right, bottom = region
+        return frame[top:bottom, left:right]
