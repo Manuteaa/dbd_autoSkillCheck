@@ -246,3 +246,4 @@ The project was made and is maintained by me ([Manuteaa](https://github.com/Manu
 Feel free to open a new issue for any question, suggestion or issue. You can also join the discord server https://discord.gg/3mewehHHpZ for more info and help.
 
 - A big thanks to [hemlock12](https://github.com/hemlock12) for the data collection help !
+- Thanks to Aaron for the big help with the discord server !
