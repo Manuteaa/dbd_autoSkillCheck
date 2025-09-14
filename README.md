@@ -216,6 +216,7 @@ In conclusion, our model achieves high accuracy thanks to the high-quality datas
 - _Note for advanced users: We also provide a tensorRT model support. Install the necessary tensorRT libs, convert the .onnx model into an optimized .trt model and select it with GPU mode from the WebUI._ 
 
 **How to run the AI model with your GPU (AMD - DirectML)**
+- Install torch with CPU compute `pip install torch`
 - Uninstall `onnxruntime` then install `onnxruntime-directml`
 - Select "GPU" in the Auto skill check webUI, click "RUN"
 
