@@ -240,6 +240,9 @@ In conclusion, our model achieves high accuracy thanks to the high-quality datas
 **Does the script work well with the perk hyperfocus ?**
 - Yes
 
+**How to fix the error `[ONNXRuntimeError] : 7 : INVALID_PROTOBUF : Load model from models/model.onnx failed:Protobuf parsing failed.` ?**
+- Sometimes Github downloads an empty .onnx file (with a size of 0ko or 1ko in the folder `models/`). Just re-download the [file](https://github.com/Manuteaa/dbd_autoSkillCheck/blob/main/models/model.onnx) and replace the empty one with the one you just downloaded.
+
 # Acknowledgments
 
 The project was made and is maintained by me ([Manuteaa](https://github.com/Manuteaa)). If you enjoy this project, consider giving it a ⭐! Starring the repository helps others discover it, and shows support for the work put into it. Your stars motivate me to add new features and address any bugs.
