@@ -224,13 +224,15 @@ In conclusion, our model achieves high accuracy thanks to the high-quality datas
 - Your game FPS >= 60
 - The AI model FPS >= 60
 - Your ping is not too high (<= 60 should be fine)
-- Use standard game settings (resolution 1920x1080 with 100% scalefor both game and monitor, without any game filters/reshade, no vsync, no FSR)
+- Disable all your game filters/reshade, disable vsync and disable FSR
 - In the `Features options` of the WebUI, decrease (closer to 0) the `Ante-frontier hit delay` value
 
 **I have lower values than 60 FPS for the AI model, what can I do ?**
 - In the `Features options` of the WebUI, increase the `CPU workload` option
 - Set both your monitor & game resolution to 1920x1080 at 100% scale
-- Increase all your monitors refresh rate to 60Hz or more
+- Increase all your monitors refresh rate (120Hz for example)
+- Use standard game settings (resolution 1920x1080 with 100% scale)
+- Use fullscreen game mode (not borderless window)
 - Switch device to gpu
 - Run the script in administrator mode or with a higher priority in the task manager
 
