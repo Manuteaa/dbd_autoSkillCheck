@@ -1,50 +1,62 @@
 # linux_uinput.py
-# Advanced Linux Kernel-Level Input Injection using evdev/uinput.
+# Linux Virtual Input Device using evdev/uinput.
 #
-# This module creates a virtual input device at the kernel level.
-# To Anti-Cheat systems, input from this device appears identical to
-# physical hardware interrupts, avoiding the LLKHF_INJECTED flag used by
-# user-space tools like xdotool or pynput.
+# This module creates a virtual input device via the kernel's uinput subsystem.
+# Input events are injected at the kernel level, which may appear more legitimate
+# than user-space tools like xdotool.
 #
-# FEATURE: Polymorphic Device Spoofing
-# Randomizes Vendor/Product IDs and device names on initialization to
-# prevent static signature blacklisting.
+# NOTE: uinput devices are detectable as virtual via sysfs paths and lack of USB bus.
+# This module does NOT bypass anti-cheat detection.
 
 import time
-import random
+import atexit
 import sys
-import os
-from typing import Optional
+from typing import Optional, Dict
 
 # Graceful import handling
 try:
     import evdev
-    from evdev import UInput, ecodes as e, AbsInfo
+    from evdev import UInput, ecodes as e
     EVDEV_AVAILABLE = True
 except ImportError:
     EVDEV_AVAILABLE = False
 
-# ── Hardware Identity Database ───────────────────────────────────────────────
-# Real hardware IDs to mimic legitimate gaming peripherals.
-# Format: (VendorID, ProductID, "Device Name")
+# Generic device identity - no hardware impersonation
+# Using a generic vendor/product ID to avoid driver conflicts
+GENERIC_VENDOR_ID = 0x1234
+GENERIC_PRODUCT_ID = 0x0001
+GENERIC_DEVICE_NAME = "Virtual Input Device"
 
-HARDWARE_DB = [
-    (0x046d, 0xc339, "Logitech G Pro Gaming Keyboard"),
-    (0x046d, 0xc33f, "Logitech G815 RGB Mechanical Gaming Keyboard"),
-    (0x1532, 0x0203, "Razer BlackWidow Chroma"),
-    (0x1532, 0x021e, "Razer Ornata Chroma"),
-    (0x1b1c, 0x1b13, "Corsair K70 RGB MK.2 Mechanical Gaming Keyboard"),
-    (0x1b1c, 0x1b2d, "Corsair K95 RGB PLATINUM XT"),
-    (0x0951, 0x16a4, "HyperX Alloy FPS Pro Mechanical Gaming Keyboard"),
-    (0x1038, 0x1610, "SteelSeries Apex Pro"),
-    (0x045e, 0x00db, "Microsoft Natural Ergonomic Keyboard 4000"),
-    (0x045e, 0x07f8, "Microsoft Sidewinder X4 Keyboard"),
-]
+# Default keymap: internal key name -> evdev ecode
+# Only Space and Shift are mapped by default since DBD skill checks use Space.
+# Users can extend this via the custom_keymap parameter.
+DEFAULT_KEYMAP: Dict[str, int] = {
+    'space': e.KEY_SPACE,
+    'shift': e.KEY_LEFTSHIFT,
+}
+
 
 class LinuxVirtualController:
-    def __init__(self):
+    """Virtual input device controller using evdev/uinput.
+    
+    Args:
+        custom_keymap: Optional dict mapping key names to evdev ecodes.
+                      Extends the default keymap (space, shift).
+    
+    Example:
+        # Default: only space and shift
+        ctrl = LinuxVirtualController()
+        ctrl.press('space')
+        
+        # Custom keymap for additional keys
+        custom = {'a': e.KEY_A, 'd': e.KEY_D}
+        ctrl = LinuxVirtualController(custom_keymap=custom)
+    """
+    
+    def __init__(self, custom_keymap: Optional[Dict[str, int]] = None):
         self.uinput: Optional['UInput'] = None
         self.device_name = "Unknown"
+        self._keymap: Dict[str, int] = {**DEFAULT_KEYMAP, **(custom_keymap or {})}
         
         if not EVDEV_AVAILABLE:
             print("[Warning] 'evdev' library not found. Falling back to pynput.")
@@ -54,85 +66,105 @@ class LinuxVirtualController:
             self._create_device()
         except PermissionError:
             print("[Error] Permission denied accessing /dev/uinput.")
-            print("  -> Run 'sudo chmod +0666 /dev/uinput' or add udev rules.")
+            print("  -> Add udev rule: echo 'KERNEL==\"uinput\", MODE=\"0660\", GROUP=\"input\"' | sudo tee /etc/udev/rules.d/99-uinput.rules")
+            print("  -> Then: sudo udevadm control --reload-rules && sudo udevadm trigger")
+            print("  -> Or add your user to 'input' group: sudo usermod -aG input $USER")
             print("  -> Falling back to standard pynput (less safe).")
             self.uinput = None
-        except Exception as e:
-            print(f"[Error] Failed to create virtual device: {e}")
+        except Exception as exc:
+            print(f"[Error] Failed to create virtual device: {exc}")
             self.uinput = None
 
     def _create_device(self):
-        # 1. Select a random persona
-        vid, pid, name = random.choice(HARDWARE_DB)
-        
-        # 2. Add slight randomness to name to avoid exact string matching blocks
-        # (e.g., "Logitech G Pro" -> "Logitech G Pro (USB)")
-        suffixes = ["", " (USB)", " Gaming Device", " Interface", " v2"]
-        self.device_name = name + random.choice(suffixes)
-        
-        # 3. Define Capabilities
-        # IMPORTANT: We must declare support for MANY keys, not just Space.
-        # A keyboard that only has a Spacebar is extremely suspicious.
+        """Create the virtual input device."""
         cap = {
-            e.EV_KEY: [
-                e.KEY_SPACE, e.KEY_ENTER, e.KEY_ESC,
-                e.KEY_A, e.KEY_B, e.KEY_C, e.KEY_D, e.KEY_E, e.KEY_F, e.KEY_G,
-                e.KEY_LEFTSHIFT, e.KEY_LEFTCTRL, e.KEY_LEFTALT,
-                e.KEY_1, e.KEY_2, e.KEY_3, e.KEY_4, e.KEY_5
-            ],
-            # Add basic relative axis support (mouse-like) to look like a precise composite device
-            # e.EV_REL: [e.REL_X, e.REL_Y] 
+            e.EV_KEY: list(self._keymap.values()),
         }
 
-        # 4. Initialize UInput Device
         self.uinput = UInput(
             events=cap,
-            name=self.device_name,
-            vendor=vid,
-            product=pid,
-            version=0x111  # version 1.1.1
+            name=GENERIC_DEVICE_NAME,
+            vendor=GENERIC_VENDOR_ID,
+            product=GENERIC_PRODUCT_ID,
+            version=0x0001,
         )
-        print(f"[Core] Virtual Kernel Device Initialized: {self.device_name} ({hex(vid)}:{hex(pid)})")
+        self.device_name = GENERIC_DEVICE_NAME
+        print(f"[Core] Virtual input device initialized: {self.device_name}")
 
     def press(self, key_code):
-        """Send specific key DOWN event."""
+        """Send key DOWN event.
+        
+        Args:
+            key_code: Key name string (e.g. 'space', 'shift', or custom keys).
+        
+        Raises:
+            ValueError: If the key is not in the keymap.
+        """
         if self.uinput:
-            # Map common internal key codes to linux ecodes if needed, 
-            # but for now we assume key_code corresponds to evdev constants usually.
-            # Map common internal key codes
-            target = key_code
-            if key_code == 'space':
-                target = e.KEY_SPACE
-            elif key_code == 'shift':
-                target = e.KEY_LEFTSHIFT
-            
-            self.uinput.write(e.EV_KEY, target, 1) # 1 = Down
+            target = self._keymap.get(key_code)
+            if target is None:
+                raise ValueError(
+                    f"Unknown key: {key_code!r}. "
+                    f"Available keys: {list(self._keymap.keys())}. "
+                    f"Pass custom_keymap to LinuxVirtualController to add more keys."
+                )
+            self.uinput.write(e.EV_KEY, target, 1)
             self.uinput.syn()
 
     def release(self, key_code):
-        """Send specific key UP event."""
+        """Send key UP event.
+        
+        Args:
+            key_code: Key name string.
+        
+        Raises:
+            ValueError: If the key is not in the keymap.
+        """
         if self.uinput:
-            target = key_code
-            if key_code == 'space':
-                target = e.KEY_SPACE
-            elif key_code == 'shift':
-                target = e.KEY_LEFTSHIFT
-            
-            self.uinput.write(e.EV_KEY, target, 0) # 0 = Up
+            target = self._keymap.get(key_code)
+            if target is None:
+                raise ValueError(
+                    f"Unknown key: {key_code!r}. "
+                    f"Available keys: {list(self._keymap.keys())}."
+                )
+            self.uinput.write(e.EV_KEY, target, 0)
             self.uinput.syn()
-            
+
     def is_active(self):
+        """Check if the virtual device is active."""
         return self.uinput is not None
-    
+
     def close(self):
+        """Close the virtual device and release resources."""
         if self.uinput:
-            self.uinput.close()
+            try:
+                self.uinput.close()
+            except Exception:
+                pass
+            self.uinput = None
+
 
 # Singleton instance
-_vcontroller = None
+_vcontroller: Optional[LinuxVirtualController] = None
 
-def get_controller():
+
+def get_controller(custom_keymap: Optional[Dict[str, int]] = None) -> LinuxVirtualController:
+    """Get or create the singleton controller.
+    
+    Args:
+        custom_keymap: Optional keymap for the first call (subsequent calls ignore this).
+    """
     global _vcontroller
     if _vcontroller is None:
-        _vcontroller = LinuxVirtualController()
+        _vcontroller = LinuxVirtualController(custom_keymap=custom_keymap)
+        # Register cleanup on exit
+        atexit.register(_vcontroller.close)
     return _vcontroller
+
+
+def close_controller():
+    """Explicitly close the singleton controller."""
+    global _vcontroller
+    if _vcontroller is not None:
+        _vcontroller.close()
+        _vcontroller = None

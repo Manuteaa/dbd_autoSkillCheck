@@ -45,7 +45,6 @@ except ImportError:
 console = Console()
 
 # Config file path (same directory as tui.py)
-# Config file path (same directory as tui.py)
 CONFIG_PATH = Path(__file__).parent / "config.json"
 LOG_DIR = Path(__file__).parent / "logs"
 
@@ -199,7 +198,6 @@ class DBDAutoSkillCheck:
         self.monitoring_type = get_platform_default_monitoring(self.platform_info)
         self.monitor_id = 0
         self.hit_ante = 0
-        self.cpu_threads = 4
         self.cpu_threads = 4
         self.humanizer = Humanizer()
         self.use_hesitation = True  # Default: active for realism
@@ -783,6 +781,13 @@ class DBDAutoSkillCheck:
             if self.ai_model is not None:
                 del self.ai_model
                 self.ai_model = None
+            # Close uinput device if active
+            if sys.platform != "win32":
+                try:
+                    from dbd.utils.linux_uinput import close_controller
+                    close_controller()
+                except ImportError:
+                    pass
             console.print("[green]Cleanup done.[/green]")
             if self.session_start:
                 elapsed = time() - self.session_start

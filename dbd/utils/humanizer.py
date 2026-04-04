@@ -4,6 +4,18 @@
 # On first run, generates a unique timing fingerprint (humanizer_fingerprint.json)
 # with randomized-but-reasonable parameters. Every installation gets slightly
 # different timing characteristics, preventing anti-cheat from clustering users.
+#
+# Non-blocking design:
+#   press() starts a background thread for the actual key press and returns
+#   immediately with the recommended cooldown duration. The caller can continue
+#   processing frames while the key press happens in the background.
+#
+# Fatigue & Hesitation:
+#   - Fatigue: Gradually increases reaction time over long sessions (up to ~22%).
+#     This simulates human tiredness but may reduce precision in competitive play.
+#   - Hesitation: ~7% chance of adding 15-65ms micro-delay before pressing.
+#     Increases realism but may cause "Good" instead of "Great" hits.
+#   - For maximum precision, set use_hesitation=False when calling press().
 
 import json
 import random
@@ -99,13 +111,18 @@ def load_fingerprint() -> dict:
 class Humanizer:
     """Human-like key press simulator with per-installation fingerprint.
 
+    Non-blocking design:
+        press() starts a background thread and returns immediately with the
+        recommended cooldown. The caller can sleep(cooldown) while frames
+        continue to be processed.
+
     Usage:
         from dbd.utils.humanizer import Humanizer
         from dbd.utils.directkeys import PressKey, ReleaseKey, SPACE
 
         humanizer = Humanizer()
         cooldown = humanizer.press(SPACE, PressKey, ReleaseKey)
-        time.sleep(cooldown)
+        time.sleep(cooldown)  # Caller handles the cooldown sleep
     """
 
     def __init__(self, fingerprint: Optional[dict] = None):
@@ -155,19 +172,37 @@ class Humanizer:
         return max(0.0, min(fp["pre_delay_max"], random.gauss(fp["pre_delay_mu"], fp["pre_delay_sigma"])))
 
     def _anti_repeat_jitter(self, duration: float) -> float:
-        """Prevent consecutive identical durations."""
-        threshold = self._fp["anti_repeat_ms"]
-        for recent in self._recent_durations:
+        """Prevent consecutive identical durations.
+        
+        Thread-safe: reads recent_durations under lock, then applies jitter.
+        Result is clamped to [press_min, press_max].
+        """
+        fp = self._fp
+        threshold = fp["anti_repeat_ms"]
+        
+        # Read recent durations under lock
+        with self._lock:
+            recent_durations = list(self._recent_durations)
+        
+        for recent in recent_durations:
             if abs(duration - recent) < threshold:
                 shift = random.uniform(threshold, threshold * 2.5)
                 if random.random() < 0.5:
                     shift = -shift
                 duration += shift
                 break
+        
+        # Clamp to valid bounds
+        duration = max(fp["press_min"], min(fp["press_max"], duration))
         return duration
 
     def _fatigue_factor(self) -> float:
-        """Gradual fatigue multiplier over long sessions."""
+        """Gradual fatigue multiplier over long sessions.
+        
+        Note: Fatigue slows reaction times by up to 22% over long sessions.
+        This simulates human tiredness but may reduce precision.
+        For competitive play, consider disabling or reducing fatigue.
+        """
         fp = self._fp
         hits = self._hit_count
         if hits < fp["fatigue_onset"]:
@@ -178,14 +213,73 @@ class Humanizer:
         return max(1.0, base_fatigue + wave)
 
     def _maybe_hesitate(self) -> float:
-        """Random micro-hesitation."""
+        """Random micro-hesitation before pressing.
+        
+        Note: ~7% chance of adding 15-65ms delay. Increases realism but
+        may cause "Good" instead of "Great" hits. Set use_hesitation=False
+        in press() to disable.
+        """
         fp = self._fp
         if random.random() < fp["hesitation_chance"]:
             return random.uniform(fp["hesitation_min"], fp["hesitation_max"])
         return 0.0
 
-    def press(self, key_code, press_fn: Callable, release_fn: Callable, use_hesitation: bool = True) -> float:
-        """Perform a human-like key press.
+    def _do_press_blocking(self, key_code, press_fn: Callable, release_fn: Callable,
+                           use_hesitation: bool = True) -> tuple[float, float]:
+        """Perform the actual key press with delays (runs in background thread).
+        
+        Returns:
+            (press_duration, cooldown) tuple for tracking.
+        """
+        fatigue = self._fatigue_factor()
+
+        pre_delay = self._pre_press_delay() * fatigue
+        press_dur = self._human_duration() * fatigue
+        hesitation = self._maybe_hesitate() if use_hesitation else 0.0
+        cooldown = self._human_cooldown() * fatigue
+
+        # Wait for inter-press guard
+        with self._lock:
+            now = time.monotonic()
+            since_last = now - self._last_press_time
+            guard = self._fp["min_inter_press"]
+            if since_last < guard and self._last_press_time > 0:
+                wait_guard = guard - since_last
+                # Release lock while sleeping
+                self._lock.release()
+                try:
+                    time.sleep(wait_guard)
+                finally:
+                    self._lock.acquire()
+
+        # Pre-delay + hesitation
+        wait = pre_delay + hesitation
+        if wait > 0.001:
+            time.sleep(wait)
+
+        # Press and hold
+        press_fn(key_code)
+        time.sleep(press_dur)
+        release_fn(key_code)
+
+        # Update state under lock
+        with self._lock:
+            self._hit_count += 1
+            self._last_press_time = time.monotonic()
+            self._recent_durations.append(press_dur)
+            if len(self._recent_durations) > self._max_recent:
+                self._recent_durations.pop(0)
+
+        return press_dur, cooldown
+
+    def press(self, key_code, press_fn: Callable, release_fn: Callable,
+              use_hesitation: bool = True) -> float:
+        """Perform a human-like key press (non-blocking).
+
+        Starts a background thread for the actual key press and returns
+        immediately with the recommended cooldown duration. The caller
+        should sleep for the returned cooldown while continuing to process
+        frames.
 
         Args:
             key_code: Key to press (e.g. SPACE)
@@ -197,34 +291,17 @@ class Humanizer:
         Returns:
             Recommended cooldown duration in seconds.
         """
+        # Calculate cooldown immediately so caller can sleep
         fatigue = self._fatigue_factor()
-
-        pre_delay = self._pre_press_delay() * fatigue
-        press_dur = self._human_duration() * fatigue
-        hesitation = self._maybe_hesitate() if use_hesitation else 0.0
         cooldown = self._human_cooldown() * fatigue
 
-        with self._lock:
-            now = time.monotonic()
-            since_last = now - self._last_press_time
-            guard = self._fp["min_inter_press"]
-            if since_last < guard and self._last_press_time > 0:
-                time.sleep(guard - since_last)
-
-        wait = pre_delay + hesitation
-        if wait > 0.001:
-            time.sleep(wait)
-
-        press_fn(key_code)
-        time.sleep(press_dur)
-        release_fn(key_code)
-
-        with self._lock:
-            self._hit_count += 1
-            self._last_press_time = time.monotonic()
-            self._recent_durations.append(press_dur)
-            if len(self._recent_durations) > self._max_recent:
-                self._recent_durations.pop(0)
+        # Start background thread for the actual press
+        thread = threading.Thread(
+            target=self._do_press_blocking,
+            args=(key_code, press_fn, release_fn, use_hesitation),
+            daemon=True,
+        )
+        thread.start()
 
         return cooldown
 
@@ -250,7 +327,7 @@ def get_humanizer() -> Humanizer:
 
 
 def humanized_press(key_code, press_fn: Callable, release_fn: Callable, use_hesitation: bool = True) -> float:
-    """One-liner human-like key press. Returns cooldown in seconds."""
+    """One-liner human-like key press. Returns cooldown in seconds (non-blocking)."""
     return get_humanizer().press(key_code, press_fn, release_fn, use_hesitation)
 
 

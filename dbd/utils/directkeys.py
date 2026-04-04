@@ -28,7 +28,6 @@ if sys.platform == "win32":
     UP = 0x26
     DOWN = 0x28
     A = 0x41
-    A = 0x41
     SPACE = 0x20
     SHIFT = 0x10
 
@@ -102,7 +101,6 @@ else:
         A = 'a'
     except ImportError:
         pynput_available = False
-        pynput_available = False
         SPACE = 'space' # safe fallback for constants
         SHIFT = 'shift'
         UP = 'up'
@@ -111,33 +109,36 @@ else:
 
     # Try to initialize Kernel-Level Input (Linux only)
     uinput_dev = None
+    _uinput_close_fn = None
     if sys.platform == "linux":
         try:
-            from dbd.utils.linux_uinput import get_controller
+            from dbd.utils.linux_uinput import get_controller, close_controller
             dev = get_controller()
             if dev.is_active():
                 uinput_dev = dev
-        except ImportError:
+                _uinput_close_fn = close_controller
+        except (ImportError, ValueError):
             pass
 
     if uinput_dev:
-        # 🟢 Kernel-Level Input Mode
+        # 🟢 Kernel-Level Input Mode (uinput)
         def PressKey(key_code):
-            # Map pynput keys to our uinput strings/codes
             if key_code == SPACE or key_code == 'space':
                 uinput_dev.press('space')
             elif key_code == SHIFT or key_code == 'shift':
                 uinput_dev.press('shift')
-            else:
-                uinput_dev.press(key_code)
+            elif pynput_available:
+                # Fallback to pynput for unmapped keys
+                keyboard.press(key_code)
+            # else: silently ignore unknown keys
 
         def ReleaseKey(key_code):
             if key_code == SPACE or key_code == 'space':
                 uinput_dev.release('space')
             elif key_code == SHIFT or key_code == 'shift':
                 uinput_dev.release('shift')
-            else:
-                uinput_dev.release(key_code)
+            elif pynput_available:
+                keyboard.release(key_code)
                 
     elif pynput_available:
         # 🟡 User-Level Input Mode (Fallback)
@@ -156,9 +157,9 @@ else:
 
     # Set active mode string
     if uinput_dev:
-        ACTIVE_INPUT_MODE = "Linux Kernel (Safe)"
+        ACTIVE_INPUT_MODE = "Linux uinput (kernel-level)"
     elif pynput_available:
-        ACTIVE_INPUT_MODE = "Linux User (Standard)"
+        ACTIVE_INPUT_MODE = "Linux User (pynput)"
     else:
         ACTIVE_INPUT_MODE = "None"
 

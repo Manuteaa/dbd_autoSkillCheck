@@ -27,15 +27,32 @@ import os
 
 from dbd.utils.monitoring_mss import Monitoring
 
+
+def _is_v4l2loopback_device(device_path: str) -> bool:
+    """Check if a v4l2 device is a loopback/virtual camera device."""
+    try:
+        result = subprocess.run(
+            ['v4l2-ctl', '-d', device_path, '--info'],
+            capture_output=True, text=True, timeout=2
+        )
+        if result.returncode == 0:
+            info = result.stdout.lower()
+            # Check for v4l2loopback or virtual camera indicators
+            if 'v4l2 loopback' in info or 'virtual' in info:
+                return True
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        pass
+    return False
+
+
 # Check if v4l2loopback devices are available
+# Only detect actual loopback/virtual camera devices, not webcams
 V4L2_AVAILABLE = False
 try:
-    if os.path.exists("/dev/video0"):
-        V4L2_AVAILABLE = True
-    else:
-        # Check for any /dev/videoN device
-        for i in range(10):
-            if os.path.exists(f"/dev/video{i}"):
+    for i in range(10):
+        dev_path = f"/dev/video{i}"
+        if os.path.exists(dev_path):
+            if _is_v4l2loopback_device(dev_path):
                 V4L2_AVAILABLE = True
                 break
 except Exception:
@@ -137,13 +154,20 @@ class Monitoring_v4l2(Monitoring):
         }
 
     def get_raw_frame(self):
-        """Grab a raw frame from the device."""
+        """Grab a raw frame from the device.
+        
+        Raises:
+            RuntimeError: If the device is not started or stops returning frames.
+        """
         if self.cap is None:
             raise RuntimeError("v4l2 not started. Call start() first.")
         
         ret, frame = self.cap.read()
         if not ret or frame is None:
-            return np.zeros((self._frame_height, self._frame_width, 3), dtype=np.uint8)
+            raise RuntimeError(
+                f"v4l2 device {self.device_path} stopped returning frames. "
+                "Please ensure OBS Virtual Camera is still active."
+            )
         
         return frame
 
