@@ -1,5 +1,7 @@
 import os
 import sys
+import logging
+import threading
 from time import time, sleep
 import gradio as gr
 
@@ -7,6 +9,9 @@ from dbd.AI_model import AI_model
 from dbd.utils.directkeys import PressKey, ReleaseKey, SPACE
 from dbd.utils.humanizer import humanized_press
 from dbd.utils.monitoring_mss import Monitoring_mss
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Optional: BetterCam (Windows only)
 try:
@@ -52,15 +57,40 @@ platform_info = get_platform_info()
 print(f"Info: Platform detected: {platform_info['display']}")
 
 
-ai_model = None
 devices = ["CPU (default)", "GPU"]
 
-def cleanup():
-    global ai_model
-    if ai_model is not None:
-        del ai_model
-        ai_model = None
-    return 0.
+# Thread-safe model state management
+class ModelState:
+    """Thread-safe container for AI model instance."""
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._model = None
+    
+    def set(self, model):
+        with self._lock:
+            # Clean up old model first
+            if self._model is not None:
+                try:
+                    self._model.cleanup()
+                except Exception as e:
+                    logger.warning(f"Error cleaning up old model: {e}")
+            self._model = model
+    
+    def get(self):
+        with self._lock:
+            return self._model
+    
+    def cleanup(self):
+        with self._lock:
+            if self._model is not None:
+                try:
+                    self._model.cleanup()
+                except Exception as e:
+                    logger.warning(f"Error during model cleanup: {e}")
+                self._model = None
+        return 0.
+
+_model_state = ModelState()
 
 
 # FPS Presets
@@ -99,11 +129,11 @@ def monitor(ai_model_path, device, monitoring_str, monitor_id, hit_ante, nb_cpu_
         monitoring = Monitoring_mss(monitor_id=monitor_id, crop_size=224)
 
     try:
-        global ai_model
         model_instance = AI_model(ai_model_path, use_gpu, nb_cpu_threads, monitoring)
-        ai_model = model_instance
+        _model_state.set(model_instance)
         execution_provider = model_instance.check_provider()
     except Exception as e:
+        logger.error(f"Failed to load AI model: {e}")
         raise gr.Error("Error when loading AI model: {}".format(e), duration=0)
 
     if execution_provider == "CUDAExecutionProvider":
@@ -123,7 +153,8 @@ def monitor(ai_model_path, device, monitoring_str, monitor_id, hit_ante, nb_cpu_
 
     try:
         while True:
-            if model_instance is None:
+            # Check if model was cleaned up externally
+            if _model_state.get() is None:
                 break
                 
             frame_np = model_instance.grab_screenshot()
@@ -157,11 +188,12 @@ def monitor(ai_model_path, device, monitoring_str, monitor_id, hit_ante, nb_cpu_
                 t0 = time()
                 nb_frames = 0
 
+    except KeyboardInterrupt:
+        logger.info("Monitoring interrupted by user.")
     except Exception as e:
-        print(f"Monitor loop error: {e}")
-        pass
+        logger.error(f"Monitor loop error: {e}", exc_info=True)
     finally:
-        print("Monitoring stopped.")
+        logger.info("Monitoring stopped.")
 
 
 if __name__ == "__main__":
@@ -340,14 +372,17 @@ if __name__ == "__main__":
             outputs=[fps, image_visu, probs]
         )
 
-        stop_button.click(fn=cleanup, inputs=None, outputs=fps)
+        stop_button.click(fn=_model_state.cleanup, inputs=None, outputs=fps)
         fps_preset.change(fn=apply_fps_preset, inputs=[fps_preset], outputs=[hit_ante])
         monitoring_str.blur(fn=switch_monitoring_cb, inputs=[monitoring_str], outputs=[monitor_id, image_visu])
         monitor_id.blur(fn=switch_monitor_cb, inputs=[monitoring_str, monitor_id], outputs=image_visu)
 
     try:
         webui.launch(theme=gr.themes.Soft())
-    except:
-        print("User stopped the web UI. Please wait to cleanup resources...")
+    except KeyboardInterrupt:
+        logger.info("Web UI interrupted by user.")
+    except Exception as e:
+        logger.error(f"Web UI error: {e}", exc_info=True)
     finally:
-        cleanup()
+        logger.info("Cleaning up resources...")
+        _model_state.cleanup()

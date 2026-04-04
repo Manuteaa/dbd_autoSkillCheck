@@ -18,17 +18,32 @@
 #   - For maximum precision, set use_hesitation=False when calling press().
 
 import json
+import os
 import random
 import math
+import sys
 import time
 import threading
 import uuid
 from pathlib import Path
 from typing import Callable, Optional
 
-# Fingerprint file lives next to the script (project root level)
-_FINGERPRINT_DIR = Path(__file__).resolve().parent.parent.parent
-_FINGERPRINT_PATH = _FINGERPRINT_DIR / "humanizer_fingerprint.json"
+# Fingerprint file lives in user's config directory (not project root)
+# This prevents accidental commits and keeps user data separate from code
+def _get_fingerprint_path() -> Path:
+    """Get the fingerprint file path in user's config directory."""
+    if sys.platform == "win32":
+        # Windows: %APPDATA%/dbd_autoSkillCheck/
+        base = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
+    else:
+        # Linux/macOS: ~/.config/dbd_autoSkillCheck/
+        base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    
+    config_dir = base / "dbd_autoSkillCheck"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    return config_dir / "humanizer_fingerprint.json"
+
+_FINGERPRINT_PATH = _get_fingerprint_path()
 
 
 def _generate_fingerprint() -> dict:
@@ -238,19 +253,18 @@ class Humanizer:
         hesitation = self._maybe_hesitate() if use_hesitation else 0.0
         cooldown = self._human_cooldown() * fatigue
 
-        # Wait for inter-press guard
+        # Wait for inter-press guard (compute under lock, sleep outside)
+        wait_guard = 0.0
         with self._lock:
             now = time.monotonic()
             since_last = now - self._last_press_time
             guard = self._fp["min_inter_press"]
             if since_last < guard and self._last_press_time > 0:
                 wait_guard = guard - since_last
-                # Release lock while sleeping
-                self._lock.release()
-                try:
-                    time.sleep(wait_guard)
-                finally:
-                    self._lock.acquire()
+
+        # Sleep outside the lock to avoid deadlock risk
+        if wait_guard > 0.001:
+            time.sleep(wait_guard)
 
         # Pre-delay + hesitation
         wait = pre_delay + hesitation

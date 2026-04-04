@@ -164,22 +164,37 @@ class AI_model:
         return "TensorRT" if self.engine else self.ort_session.get_providers()[0]
 
     def cleanup(self):
-        self.stream = None
-        self.context = None
-        self.engine = None
+        """Clean up resources safely. Can be called multiple times."""
+        try:
+            self.stream = None
+            self.context = None
+            self.engine = None
 
-        self.monitor.stop()
-        self.monitor = None
+            if self.monitor is not None:
+                try:
+                    self.monitor.stop()
+                except Exception:
+                    pass  # Monitor may already be stopped
+                self.monitor = None
 
-        if self.bindings:
-            for binding in self.bindings:
-                binding.free()
-            self.bindings = None
+            if self.bindings:
+                for binding in self.bindings:
+                    try:
+                        binding.free()
+                    except Exception:
+                        pass  # Binding may already be freed
+                self.bindings = None
 
-        if self.cuda_context:
-            self.cuda_context.pop()
-            self.cuda_context = None
-            print("Info: Cuda context released")
+            if self.cuda_context:
+                try:
+                    self.cuda_context.pop()
+                except Exception:
+                    pass  # Context may already be released
+                self.cuda_context = None
+                print("Info: Cuda context released")
+        except Exception as e:
+            # __del__ and cleanup should never raise exceptions
+            print(f"Warning: Error during cleanup: {e}")
 
     def __enter__(self):
         return self
@@ -188,4 +203,9 @@ class AI_model:
         self.cleanup()
 
     def __del__(self):
-        self.cleanup()
+        # __del__ is not guaranteed to be called, and may run during interpreter shutdown
+        # when global modules are already unloaded. Use try-except to be safe.
+        try:
+            self.cleanup()
+        except Exception:
+            pass  # Silently ignore cleanup errors in __del__
