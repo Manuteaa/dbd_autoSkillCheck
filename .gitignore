@@ -3,6 +3,7 @@ dataset*/
 *.yaml
 .idea/
 *.pyc
+__pycache__/
 lightning_logs/
 .ipynb_*
 saved_images/
@@ -10,3 +11,9 @@ dist/
 build/
 python-embed*/
 release*/
+venv/
+.venv/
+*.egg-info/
+config.json
+humanizer_fingerprint.json
+logs/

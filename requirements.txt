@@ -1,0 +1,14 @@
+# Core dependencies
+numpy>=1.24.0,<2.0.0
+opencv-python>=4.8.0
+onnxruntime>=1.15.0
+Pillow>=10.0.0
+mss>=9.0.0
+gradio>=4.0.0
+
+# Terminal UI
+rich>=13.0.0
+
+# Linux keyboard input (not needed on Windows)
+pynput>=1.7.6
+evdev>=1.6.1; sys_platform == 'linux'

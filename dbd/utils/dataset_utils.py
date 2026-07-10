@@ -17,9 +17,11 @@ def delete_similar_images(folder):
         image1 = cv2.imread(im1)
         image2 = cv2.imread(im2)
 
-        diff = np.abs(image1.astype(np.float32) - image2.astype(np.float32))
-        diff = (diff[:, :, 0] + diff[:, :, 1] + 10.0 * diff[:, :, 2]) / 3.0  # add more weight to red channel
-        diff = np.mean(diff) / 255.
+        # Use int32 instead of float32 for better performance
+        # Results are identical for absolute difference calculation
+        diff = np.abs(image1.astype(np.int32) - image2.astype(np.int32))
+        diff = (diff[:, :, 0] + diff[:, :, 1] + 10 * diff[:, :, 2]) / 3.0  # add more weight to red channel
+        diff = np.mean(diff) / 255.0
 
         # print(diff, im1, im2)
         if diff < 0.01:
