@@ -1,156 +1,74 @@
-import os.path
-import torch
-import numpy as np
-from glob import glob
+"""Dataset discovery and PyTorch data loader helpers."""
 
-import math
+from collections.abc import Callable
+from pathlib import Path
+
+import numpy as np
+import torch
+from torch import Tensor
+from torch.utils.data import DataLoader, Dataset
+from torchvision.io import ImageReadMode, decode_image
 
 from dbd.datasets.transforms import get_training_transforms, get_validation_transforms
-from torch.utils.data import DataLoader, WeightedRandomSampler, Dataset
-from torchvision.io import read_image, ImageReadMode
 
 
-class DBD_dataset(Dataset):
-    """
-    Dataset class for DBD dataset
-    - Handles custom sampler to deal with class imbalance
-    """
+class DBDDataset(Dataset):
+    """Load labeled Dead by Daylight images and apply a transform."""
 
-    def __init__(self, dataset, transforms):
-        """
-        :param dataset: numpy array of {image_path, label}
-        :param transforms: torchvision transforms
-        """
+    def __init__(self, samples: np.ndarray, transform: Callable) -> None:
+        """Initialize the dataset from ``(image path, label)`` pairs."""
+        self.image_paths = samples[:, 0]
+        self.targets = torch.as_tensor(samples[:, 1].astype(np.int64), dtype=torch.int64)
+        self.transform = transform
 
-        self.images_path = dataset[:, 0]
-        self.targets = torch.tensor(dataset[:, 1].astype(np.int64), dtype=torch.int64)
-        self.transforms = transforms
-
-    def __len__(self):
+    def __len__(self) -> int:
+        """Return the number of samples."""
         return len(self.targets)
 
-    def __getitem__(self, idx):
-        image = self.get_image_from_path(idx)
-        image = self.transforms(image)
-
-        target = self.targets[idx]
-        return image, target
-
-    def _get_class_weights(self):
-        count_classes = torch.bincount(self.targets)
-        w_mapping = 1.0 / count_classes  # all classes have equal chance to be sampled
-        return w_mapping
-
-    def _get_sampler(self, seed=42):
-        generator_torch = torch.Generator().manual_seed(seed)
-        w = self._get_class_weights()
-        w = w[self.targets]
-
-        sampler = WeightedRandomSampler(w, num_samples=len(w), replacement=True, generator=generator_torch)
-        return sampler
-
-    def get_image_from_path(self, idx):
-        image = self.images_path[idx]
-        image = read_image(image, mode=ImageReadMode.RGB)
-        return image
-
-    def get_dataloader(self, batch_size=32, num_workers=0, use_balanced_sampler=False):
-        sampler = self._get_sampler() if use_balanced_sampler else None
-        dataloader = DataLoader(self, batch_size=batch_size, num_workers=num_workers, sampler=sampler, persistent_workers=True, pin_memory=True)
-        return dataloader
+    def __getitem__(self, index: int) -> tuple[Tensor, Tensor]:
+        """Decode and transform one image with its target."""
+        image = decode_image(str(self.image_paths[index]), mode=ImageReadMode.RGB)
+        return self.transform(image), self.targets[index]
 
 
-def _parse_dbd_datasetfolder(root_dataset_path):
-    """
-    Get dataset as list of pairs {image path, label} in numpy array format
-    Args:
-        root_dataset_path:
-
-    Returns: numpy array with shape (nb_images, 2), data type is str
-
-    """
-    folders = os.scandir(root_dataset_path)
-    images_all = []
-    targets_all = []
-
-    for folder in folders:
-        name, path = folder.name, folder.path
-        if not name.isdigit():
-            print("Skipping folder " + name)
+def parse_dbd_datasetfolder(root_dataset_path: str | Path) -> np.ndarray:
+    """Return sorted ``(image path, label)`` pairs from numeric class folders."""
+    root = Path(root_dataset_path)
+    samples = []
+    for class_folder in sorted(root.iterdir(), key=lambda path: path.name):
+        if not class_folder.is_dir() or not class_folder.name.isdigit():
             continue
+        image_paths = sorted(class_folder.glob("*.*"), key=lambda path: path.name)
+        samples.extend((str(image_path), class_folder.name) for image_path in image_paths if image_path.is_file())
 
-        images = glob(os.path.join(path, "*.*"))
-        print("Parsing folder {} : {} images found".format(name, len(images)))
-
-        images_all += images
-        targets_all += [name] * len(images)
-
-    dataset = np.stack([images_all, targets_all], axis=-1)
-    return dataset
+    return np.asarray(samples, dtype=str).reshape(-1, 2)
 
 
-def get_dataloaders(root_dataset_path, batch_size=32, seed=42, num_workers=0):
-    """  Get training and validation data loaders
-    Args:
-        root_dataset_path: Root dataset path, containing folders with name corresponding to associated class
-        batch_size: batch size
-        seed: seed to init random generators
-        num_workers: data loader num workers
+def get_dataloaders(
+    root_dataset_path: str | Path,
+    batch_size: int = 32,
+    seed: int = 42,
+    num_workers: int = 0,
+    ratio_train: float = 0.8,
+) -> tuple[DataLoader, DataLoader]:
+    """Build deterministic training and validation data loaders."""
+    samples = parse_dbd_datasetfolder(root_dataset_path)
+    np.random.default_rng(seed).shuffle(samples)
+    split_index = int(ratio_train * len(samples))
+    training_samples, validation_samples = samples[:split_index], samples[split_index:]
 
-    """
-    assert os.path.exists(root_dataset_path)
-
-    # Parse dataset
-    dataset = _parse_dbd_datasetfolder(root_dataset_path)  # shape is (nb_images, 2)
-
-    # Shuffle dataset and split into a training set and a validation set
-    generator = np.random.default_rng(seed)
-    generator.shuffle(dataset)
-
-    nb_samples_train = math.floor(0.8 * len(dataset))
-    dataset_train, dataset_val = dataset[:nb_samples_train], dataset[nb_samples_train:]
-
-    # Set data loaders
-    train_transforms = get_training_transforms()
-    dataset_train = DBD_dataset(dataset_train, train_transforms)
-    dataloader_train = dataset_train.get_dataloader(batch_size=batch_size, num_workers=num_workers, use_balanced_sampler=True)
-
-    val_transforms = get_validation_transforms()
-    dataset_val = DBD_dataset(dataset_val, val_transforms)
-    dataloader_val = dataset_val.get_dataloader(batch_size=batch_size, num_workers=num_workers, use_balanced_sampler=False)
-
-    return dataloader_train, dataloader_val
-
-
-if __name__ == '__main__':
-    from dbd.datasets.transforms import MEAN, STD
-    import cv2
-
-    dataset_root = "dataset/"
-    dataloader_train, dataloader_val = get_dataloaders(dataset_root, batch_size=1, num_workers=1)
-    # dataloader_train, dataloader_val = get_dataloaders(dataset_root, batch_size=32, num_workers=1)
-
-    std = torch.tensor(STD, dtype=torch.float32).reshape((3, 1, 1))
-    mean = torch.tensor(MEAN, dtype=torch.float32).reshape((3, 1, 1))
-
-    batch = next(iter(dataloader_train))
-    x, y = batch
-
-    # for batch in dataloader_train:
-    #     x, y = batch
-    #     print(torch.bincount(y))
-
-    for i, batch in enumerate(dataloader_train):
-        x, y = batch
-        x = x[0]  # take first sample
-        x = x * std + mean  # un-normalization to [0, 1] with auto-broadcast
-        x = x * 255.
-
-        x = x.permute((1, 2, 0))  # channel last : (3, 224, 224) --> (224, 224, 3)
-        x = x.cpu().numpy().astype(np.uint8)
-
-        img = cv2.cvtColor(x, cv2.COLOR_RGB2BGR)
-        category = str(y.cpu().numpy()[0])
-        cv2.imshow(category, img)
-        cv2.moveWindow(category, 200, 200)
-        cv2.waitKey()
+    loader_options = {
+        "batch_size": batch_size,
+        "num_workers": num_workers,
+        "persistent_workers": num_workers > 0,
+        "pin_memory": True,
+    }
+    training_loader = DataLoader(
+        DBDDataset(training_samples, get_training_transforms()),
+        **loader_options,
+    )
+    validation_loader = DataLoader(
+        DBDDataset(validation_samples, get_validation_transforms()),
+        **loader_options,
+    )
+    return training_loader, validation_loader

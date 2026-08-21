@@ -10,3 +10,4 @@ dist/
 build/
 python-embed*/
 release*/
+.venv/

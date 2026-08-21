@@ -1,6 +1,5 @@
-import cv2
 import numpy as np
-from mss import mss
+from mss import MSS
 from PIL import Image
 
 
@@ -40,7 +39,7 @@ class Monitoring_mss(Monitoring):
         self.sct = None
 
     def start(self):
-        self.sct = mss()
+        self.sct = MSS()
 
     def stop(self):
         if self.sct is not None:
@@ -49,24 +48,24 @@ class Monitoring_mss(Monitoring):
 
     @staticmethod
     def get_monitors_info():
-        with mss() as sct:
+        with MSS() as sct:
             monitors = sct.monitors[1:]
             monitor_choices = [(f"Monitor {i + 1}: {m['width']}x{m['height']}", i + 1) for i, m in enumerate(monitors)]
             return monitor_choices
 
     @staticmethod
     def _get_monitor_region(monitor_id=1, crop_size=224):
-        with mss() as sct:
+        with MSS() as sct:
             monitor = sct.monitors[monitor_id]
             object_size_h_ratio = crop_size / 1080
             object_size = int(object_size_h_ratio * monitor["height"])
 
             region = {
-                    "top": monitor["top"] + monitor["height"] // 2 - object_size // 2,
-                    "left": monitor["left"] + monitor["width"] // 2 - object_size // 2,
-                    "width": object_size,
-                    "height": object_size
-                }
+                "top": monitor["top"] + monitor["height"] // 2 - object_size // 2,
+                "left": monitor["left"] + monitor["width"] // 2 - object_size // 2,
+                "width": object_size,
+                "height": object_size,
+            }
 
             return region
 
@@ -91,6 +90,9 @@ class Monitoring_mss(Monitoring):
         frame = np.flip(frame[:, :, :3], 2)  # Convert BGRA to RGB
 
         if frame.shape[:2] != (self.crop_size, self.crop_size):
-            frame = cv2.resize(frame, (self.crop_size, self.crop_size), interpolation=cv2.INTER_CUBIC)
+            frame = np.array(
+                Image.fromarray(frame).resize((self.crop_size, self.crop_size), Image.Resampling.BICUBIC),
+                dtype=np.uint8,
+            )
 
         return frame

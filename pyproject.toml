@@ -1,0 +1,55 @@
+[project]
+name = "dbd-auto-skill-check-community"
+version = "4.4.0"
+description = "Community edition and deep-learning research code for DBD Auto Skill Check"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "dearpygui>=2.3.1",
+    "mss>=10.2.0",
+    "numpy>=2.5.1",
+    "onnxruntime>=1.28.0",
+    "pillow>=12.3.0",
+    "pynput>=1.8.2",
+]
+
+[project.optional-dependencies]
+training = [
+    "lightning>=2.6.5",
+    "tensorboard>=2.21.0",
+    "torch>=2.13.0",
+    "torchmetrics>=1.9.0",
+    "torchvision>=0.28.0",
+    "tqdm>=4.67.0",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu132"
+url = "https://download.pytorch.org/whl/cu132"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cu132", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+torchvision = [
+    { index = "pytorch-cu132", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+
+
+[tool.ruff]
+line-length = 150
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "ANN401",
+    "ERA001",
+    "FBT001",
+    "FBT002",
+    "N999",
+    "PLR2004",
+    "TC001",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

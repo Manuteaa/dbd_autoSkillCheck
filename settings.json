@@ -1,0 +1,6 @@
+{
+  "monitor_id": null,
+  "thresh": 51,
+  "thresh_frontier": 51,
+  "delay_frontier": 5
+}
